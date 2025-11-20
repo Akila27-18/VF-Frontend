@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { AuthContext } from "./context/AuthContext";
-import api from "./lib/api";
+import { AuthContext } from "../context/AuthContext";
+import api from "../lib/api";
 
 export default function ProtectedRoute({ children }) {
   const { token } = useContext(AuthContext);
