@@ -110,7 +110,7 @@ export default function App() {
 
             {/* ---------------- DASHBOARD SUB-PAGES ---------------- */}
            <Route
-            path="/dashboard/insights"
+            path="/pages/insights"
             element={
               <motion.div {...pageTransition}>
                 <ProtectedRoute>
@@ -122,7 +122,7 @@ export default function App() {
 
 
                     <Route
-          path="/dashboard/payments"
+          path="/pages/payments"
           element={
             <motion.div {...pageTransition}>
               <ProtectedRoute>
