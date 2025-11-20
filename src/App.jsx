@@ -13,10 +13,10 @@ import Insights from "./pages/Insights";
 import Payments from "./pages/Payments";
 
 /* Public pages */
-import Signup from "./components/Signup";
+import Signup from "./pages/Signup";
 import LearnMore from "./components/LearnMore";
 import GetStarted from "./components/GetStarted";
-import Login from "./components/Login";
+import Login from "./pages/Login";
 import ForgotPassword from "./components/ForgotPassword";
 
 /* Protected route wrapper */
