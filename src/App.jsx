@@ -14,10 +14,10 @@ import Payments from "./pages/Payments";
 
 /* Public pages */
 import Signup from "./pages/Signup";
-import LearnMore from "./components/LearnMore";
-import GetStarted from "./components/GetStarted";
 import Login from "./pages/Login";
 import ForgotPassword from "./components/ForgotPassword";
+import LearnMore from "./components/LearnMore";
+import GetStarted from "./components/GetStarted";
 
 /* Protected route wrapper */
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -42,60 +42,39 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-white">
-      
-      {/* Header visible only on non-auth pages */}
       {!shouldHideHeader && <Header />}
 
       <main className="max-w-6xl mx-auto p-6 relative">
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
 
-            {/* ---------------- PUBLIC ROUTES ---------------- */}
+            {/* PUBLIC ROUTES */}
             <Route
               path="/"
               element={<motion.div {...pageTransition}><Landing /></motion.div>}
             />
-
             <Route
               path="/signup"
               element={<motion.div {...pageTransition}><Signup /></motion.div>}
             />
-
             <Route
               path="/login"
               element={<motion.div {...pageTransition}><Login /></motion.div>}
             />
-
             <Route
               path="/forgot-password"
               element={<motion.div {...pageTransition}><ForgotPassword /></motion.div>}
             />
-
             <Route
               path="/learn-more"
               element={<motion.div {...pageTransition}><LearnMore /></motion.div>}
             />
-
             <Route
               path="/get-started"
               element={<motion.div {...pageTransition}><GetStarted /></motion.div>}
             />
 
-
-            {/* ---------------- RESOURCES PAGE ---------------- */}
-            <Route
-              path="/resources/:slug"
-              element={
-                <motion.div {...pageTransition}>
-                  <ProtectedRoute>
-                    <ResourcePage />
-                  </ProtectedRoute>
-                </motion.div>
-              }
-            />
-
-
-            {/* ---------------- DASHBOARD MAIN ---------------- */}
+            {/* PROTECTED DASHBOARD ROUTES */}
             <Route
               path="/dashboard"
               element={
@@ -106,33 +85,38 @@ export default function App() {
                 </motion.div>
               }
             />
+            <Route
+              path="/dashboard/insights"
+              element={
+                <motion.div {...pageTransition}>
+                  <ProtectedRoute>
+                    <Insights />
+                  </ProtectedRoute>
+                </motion.div>
+              }
+            />
+            <Route
+              path="/dashboard/payments"
+              element={
+                <motion.div {...pageTransition}>
+                  <ProtectedRoute>
+                    <Payments />
+                  </ProtectedRoute>
+                </motion.div>
+              }
+            />
 
-
-            {/* ---------------- DASHBOARD SUB-PAGES ---------------- */}
-           <Route
-  path="/dashboard/insights"
-  element={
-    <motion.div {...pageTransition}>
-      <ProtectedRoute>
-        <Insights />
-      </ProtectedRoute>
-    </motion.div>
-  }
-/>
-
-<Route
-  path="/dashboard/payments"
-  element={
-    <motion.div {...pageTransition}>
-      <ProtectedRoute>
-        <Payments />
-      </ProtectedRoute>
-    </motion.div>
-  }
-/>
-
-
-
+            {/* RESOURCES PAGE */}
+            <Route
+              path="/resources/:slug"
+              element={
+                <motion.div {...pageTransition}>
+                  <ProtectedRoute>
+                    <ResourcePage />
+                  </ProtectedRoute>
+                </motion.div>
+              }
+            />
           </Routes>
         </AnimatePresence>
       </main>
