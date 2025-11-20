@@ -110,27 +110,27 @@ export default function App() {
 
             {/* ---------------- DASHBOARD SUB-PAGES ---------------- */}
            <Route
-            path="/pages/insights"
-            element={
-              <motion.div {...pageTransition}>
-                <ProtectedRoute>
-                  <Insights />
-                </ProtectedRoute>
-              </motion.div>
-            }
-          />
+  path="/dashboard/insights"
+  element={
+    <motion.div {...pageTransition}>
+      <ProtectedRoute>
+        <Insights />
+      </ProtectedRoute>
+    </motion.div>
+  }
+/>
 
+<Route
+  path="/dashboard/payments"
+  element={
+    <motion.div {...pageTransition}>
+      <ProtectedRoute>
+        <Payments />
+      </ProtectedRoute>
+    </motion.div>
+  }
+/>
 
-                    <Route
-          path="/pages/payments"
-          element={
-            <motion.div {...pageTransition}>
-              <ProtectedRoute>
-                <Payments />
-              </ProtectedRoute>
-            </motion.div>
-          }
-        />
 
 
           </Routes>
