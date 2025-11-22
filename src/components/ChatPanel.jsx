@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useWebSocket } from "./hooks/useWebSocket";
+import { useWebSocket } from "../hooks/useWebSocket";
 
 export default function ChatPanel({ wsUrl, user = "You" }) {
   const scroller = useRef(null);
