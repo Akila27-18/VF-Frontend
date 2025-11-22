@@ -16,7 +16,7 @@ export default function Login() {
     e.preventDefault();
     setErr("");
 
-    const res = await api.post("/auth/login", form);
+    const res = await api.post("/auth/login/", form);
 
     if (!res.ok) return setErr(res.data?.error || "Invalid email or password");
     if (!res.data.token) return setErr("Server did not return token");

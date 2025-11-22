@@ -13,7 +13,7 @@ export default function Signup() {
     setErr("");
     setSuccess("");
 
-    const res = await api.post("/auth/signup", form);
+    const res = await api.post("/auth/signup/", form);
     if (!res.ok) return setErr(res.data.error || "Signup failed");
 
     setSuccess("Account created! Redirecting to login...");
