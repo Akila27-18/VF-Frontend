@@ -1,9 +1,25 @@
-    Vetri Finance Frontend (stable)
+# Vetri Finance App
 
-Quickstart:
+Full-stack scaffold: React + Tailwind frontend and Django REST backend.
+White background, orange accent color, minimal professional UI.
 
-  cd frontend
-  npm install
-  npm run dev
+Quickstart
 
-Then open http://localhost:5173
+Frontend:
+
+    cd frontend
+    npm install
+    npm run dev
+
+Backend:
+
+    cd backend
+    python -m venv .venv
+    source .venv/bin/activate   # or .venv\Scripts\activate on Windows
+    pip install -r requirements.txt
+    python manage.py makemigrations
+    python manage.py migrate
+    python manage.py runserver
+
+Frontend runs on Vite dev server (default :5173). Backend runs :8000.
+Update frontend src/lib/api.js base URL if needed.
