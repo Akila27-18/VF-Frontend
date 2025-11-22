@@ -1,19 +1,19 @@
-import React, { createContext, useState } from "react";
+// Example AuthContext.js
+import { createContext, useState, useEffect } from "react";
 
 export const AuthContext = createContext();
 
-export const AuthProvider = ({ children }) => {
-  // Read token from localStorage on initial load
-  const [token, setToken] = useState(() => localStorage.getItem("token") || null);
+export function AuthProvider({ children }) {
+  const [token, setToken] = useState(localStorage.getItem("token") || null);
 
-  const login = (newToken) => {
-    setToken(newToken);
-    localStorage.setItem("token", newToken); // persist token
+  const login = (jwt) => {
+    localStorage.setItem("token", jwt);
+    setToken(jwt);
   };
 
   const logout = () => {
-    setToken(null);
     localStorage.removeItem("token");
+    setToken(null);
   };
 
   return (
@@ -21,4 +21,4 @@ export const AuthProvider = ({ children }) => {
       {children}
     </AuthContext.Provider>
   );
-};
+}
