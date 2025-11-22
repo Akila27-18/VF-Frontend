@@ -16,7 +16,7 @@ import GetStarted from "./components/GetStarted";
 import Insights from "./pages/Insights";
 import Payments from "./pages/Payments";
 
-<<<<<<< HEAD
+
 /* Public pages */
 import Signup from "./pages/Signup";
 import Login from "./pages/Login";
@@ -25,15 +25,12 @@ import LearnMore from "./components/LearnMore";
 import GetStarted from "./components/GetStarted";
 
 /* Protected route wrapper */
-=======
-/* Protected wrapper */
->>>>>>> 53b22fd (first commit)
+
 import ProtectedRoute from "./components/ProtectedRoute";
 
 export default function App() {
   return (
     <div className="min-h-screen bg-white">
-<<<<<<< HEAD
       {!shouldHideHeader && <Header />}
 
       <main className="max-w-6xl mx-auto p-6 relative">
@@ -111,45 +108,6 @@ export default function App() {
             />
           </Routes>
         </AnimatePresence>
-=======
-      <Header />
-      <main className="max-w-6xl mx-auto p-6">
-        <Routes>
-          {/* Public pages */}
-          <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/learn-more" element={<LearnMore />} />
-          <Route path="/get-started" element={<GetStarted />} />
-
-          {/* Protected pages */}
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/insights"
-            element={
-              <ProtectedRoute>
-                <Insights />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/payments"
-            element={
-              <ProtectedRoute>
-                <Payments />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
->>>>>>> 53b22fd (first commit)
       </main>
     </div>
   );
