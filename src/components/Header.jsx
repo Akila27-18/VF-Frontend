@@ -18,7 +18,7 @@ export default function Header() {
           
           {/* Replace the "V" with an image logo */}
           <img
-            src="public/logos/vlogo.png"   // ✅ Place vetri-logo.png inside public/
+            src="/logos/vlogo.png"   // ✅ Place vetri-logo.png inside public/
             alt="Vetri Logo"
             className="w-20 h-20 rounded-lg object-cover"
           />
