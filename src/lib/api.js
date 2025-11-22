@@ -1,48 +1,41 @@
-const API_URL = import.meta.env.VITE_BACKEND_URL || "https://vf-backend-1.onrender.com";
+const BASE_URL = "https://vf-backend-1.onrender.com";
 
 // Get token from localStorage
 const getToken = () => localStorage.getItem("token");
 
-// Core fetch wrapper
+// Core fetch function
 const request = async (path, options = {}) => {
   try {
+    // Merge headers: default + token + any passed headers
     const headers = {
       "Content-Type": "application/json",
-      ...(getToken() ? { Authorization: `Bearer ${getToken()}` } : {}),
+      ...(getToken() && { Authorization: `Bearer ${getToken()}` }),
       ...options.headers,
     };
 
-    const res = await fetch(`${API_URL}${path}`, {
+    // Fetch with merged options
+    const res = await fetch(`${BASE_URL}${path}`, {
       ...options,
       headers,
     });
 
-    let data = null;
-    try {
-      data = await res.json();
-    } catch {
-      // ignore JSON parse errors
-    }
+    // Parse JSON response safely
+    const data = await res.json().catch(() => null);
 
-    return {
-      ok: res.ok,
-      status: res.status,
-      data,
-    };
+    return { ok: res.ok, status: res.status, data };
   } catch (err) {
-    console.error("API request failed:", err);
-    return { ok: false, status: 500, data: null };
+    return { ok: false, status: 0, data: { error: err.message } };
   }
 };
 
-// Convenient methods
+// API wrapper
 const api = {
-  get: (path, options) => request(path, { ...options, method: "GET" }),
-  post: (path, body, options) =>
-    request(path, { ...options, method: "POST", body: JSON.stringify(body) }),
-  put: (path, body, options) =>
-    request(path, { ...options, method: "PUT", body: JSON.stringify(body) }),
-  delete: (path, options) => request(path, { ...options, method: "DELETE" }),
+  get: (path) => request(path, { method: "GET" }),
+  post: (path, body) =>
+    request(path, { method: "POST", body: JSON.stringify(body) }),
+  put: (path, body) =>
+    request(path, { method: "PUT", body: JSON.stringify(body) }),
+  delete: (path) => request(path, { method: "DELETE" }),
 };
 
 export default api;
