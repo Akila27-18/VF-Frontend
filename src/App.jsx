@@ -1,34 +1,40 @@
 import React from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
 
 /* Components */
 import Header from "./components/Header";
 import Dashboard from "./components/Dashboard";
+import ProtectedRoute from "./components/ProtectedRoute";
 
-/* Pages */
+/* Public Pages */
 import Landing from "./components/Landing";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ForgotPassword from "./components/ForgotPassword";
-import NewsFeed from "./components/NewsFeed";
 import LearnMore from "./components/LearnMore";
 import GetStarted from "./components/GetStarted";
+
+/* Protected Pages */
 import Insights from "./pages/Insights";
 import Payments from "./pages/Payments";
 
+/* Optional Resource Page (if exists) */
+import ResourcePage from "./components/ResourcePage";
 
-/* Public pages */
-import Signup from "./pages/Signup";
-import Login from "./pages/Login";
-import ForgotPassword from "./components/ForgotPassword";
-import LearnMore from "./components/LearnMore";
-import GetStarted from "./components/GetStarted";
-
-/* Protected route wrapper */
-
-import ProtectedRoute from "./components/ProtectedRoute";
+/* Page transition animation */
+const pageTransition = {
+  initial: { opacity: 0, y: 10 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -10 },
+  transition: { duration: 0.25 },
+};
 
 export default function App() {
+  const location = useLocation();
+  const hiddenRoutes = ["/login", "/signup"];
+  const shouldHideHeader = hiddenRoutes.includes(location.pathname);
+
   return (
     <div className="min-h-screen bg-white">
       {!shouldHideHeader && <Header />}
@@ -63,7 +69,7 @@ export default function App() {
               element={<motion.div {...pageTransition}><GetStarted /></motion.div>}
             />
 
-            {/* PROTECTED DASHBOARD ROUTES */}
+            {/* PROTECTED ROUTES */}
             <Route
               path="/dashboard"
               element={
@@ -95,7 +101,7 @@ export default function App() {
               }
             />
 
-            {/* RESOURCES PAGE */}
+            {/* OPTIONAL RESOURCE PAGE (only if exists) */}
             <Route
               path="/resources/:slug"
               element={
@@ -106,6 +112,7 @@ export default function App() {
                 </motion.div>
               }
             />
+
           </Routes>
         </AnimatePresence>
       </main>
