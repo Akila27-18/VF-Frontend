@@ -7,7 +7,7 @@ export default function Login() {
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
-  const from = location.state?.from?.pathname || "/landing";
+  const from = location.state?.from?.pathname || "/dashboard";
 
   const [form, setForm] = useState({ email: "", password: "" });
   const [err, setErr] = useState("");
@@ -16,20 +16,20 @@ export default function Login() {
     e.preventDefault();
     setErr("");
 
-    try {
-      const res = await api.post("/auth/login", form);
+    const res = await api.post("/auth/login", form); // using your fetch wrapper
 
-      if (!res.ok) return setErr(res.data.error || "Login failed");
-      if (!res.data.token) return setErr("Invalid server response");
-
-      // Save token in context + localStorage
-      login(res.data.token);
-
-      // Navigate to previous page or landing
-      navigate(from, { replace: true });
-    } catch (error) {
-      setErr("Something went wrong. Please try again.");
+    if (!res.ok) {
+      return setErr(res.data?.error || "Invalid email or password");
     }
+
+    if (!res.data.token) {
+      return setErr("Server did not return token");
+    }
+
+    // Save token in context + localStorage
+    login(res.data.token);
+
+    navigate(from, { replace: true });
   };
 
   return (
@@ -39,7 +39,9 @@ export default function Login() {
         className="bg-white p-6 rounded shadow w-full max-w-md"
       >
         <h2 className="text-xl font-semibold mb-4">Login</h2>
+
         {err && <div className="text-red-600 mb-2">{err}</div>}
+
         <input
           placeholder="Email"
           value={form.email}
@@ -53,15 +55,18 @@ export default function Login() {
           onChange={(e) => setForm({ ...form, password: e.target.value })}
           className="w-full mb-2 border rounded px-3 py-2"
         />
+
         <button className="w-full bg-orange-500 text-white py-2 rounded hover:bg-orange-600 mb-2">
           Login
         </button>
+
         <p className="text-sm text-gray-600 text-center">
           Don't have an account?{" "}
           <Link to="/signup" className="text-orange-500 hover:underline">
             Sign up
           </Link>
         </p>
+
         <p className="text-sm text-gray-600 text-center mt-1">
           <Link to="/forgot-password" className="text-orange-500 hover:underline">
             Forgot password?
