@@ -1,10 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-<<<<<<< HEAD
 import { useWebSocket } from "./hooks/useWebSocket";
-=======
-import { useWebSocket } from "../hooks/useWebSocket";
-import axios from "axios";
->>>>>>> 53b22fd (first commit)
 
 export default function ChatPanel({ wsUrl, user = "You" }) {
   const scroller = useRef(null);
