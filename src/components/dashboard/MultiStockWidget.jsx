@@ -4,11 +4,11 @@ import { Sparklines, SparklinesLine } from "react-sparklines";
 
 // Stock logos (public folder /public/logos/)
 const LOGOS = {
-  GOOGL: "public/logos/google.jpg",
-  AMZN: "public/logos/amzn.jpg",
-  AAPL: "public/logos/aapl.jpg",
-  TSLA: "public/logos/tsla.jpg",
-  MSFT: "public/logos/msft.jpg",
+  GOOGL: "/logos/google.jpg",
+  AMZN: "/logos/amzn.jpg",
+  AAPL: "/logos/aapl.jpg",
+  TSLA: "/logos/tsla.jpg",
+  MSFT: "/logos/msft.jpg",
   "RELIANCE.NS": "public/logos/reliance.jpg",
   "TCS.NS": "public/logos/tcs.jpg",
   "HDFCBANK.NS": "public/logos/hdfc.jpg",

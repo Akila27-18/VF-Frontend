@@ -1,5 +1,5 @@
 import React, { useState, useContext } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import api from "../lib/api";
 
@@ -16,19 +16,12 @@ export default function Login() {
     e.preventDefault();
     setErr("");
 
-    const res = await api.post("/auth/login", form); // using your fetch wrapper
+    const res = await api.post("/auth/login", form);
 
-    if (!res.ok) {
-      return setErr(res.data?.error || "Invalid email or password");
-    }
+    if (!res.ok) return setErr(res.data?.error || "Invalid email or password");
+    if (!res.data.token) return setErr("Server did not return token");
 
-    if (!res.data.token) {
-      return setErr("Server did not return token");
-    }
-
-    // Save token in context + localStorage
     login(res.data.token);
-
     navigate(from, { replace: true });
   };
 
@@ -56,22 +49,12 @@ export default function Login() {
           className="w-full mb-2 border rounded px-3 py-2"
         />
 
-        <button className="w-full bg-orange-500 text-white py-2 rounded hover:bg-orange-600 mb-2">
+        <button
+          type="submit"
+          className="w-full bg-orange-500 text-white py-2 rounded hover:bg-orange-600"
+        >
           Login
         </button>
-
-        <p className="text-sm text-gray-600 text-center">
-          Don't have an account?{" "}
-          <Link to="/signup" className="text-orange-500 hover:underline">
-            Sign up
-          </Link>
-        </p>
-
-        <p className="text-sm text-gray-600 text-center mt-1">
-          <Link to="/forgot-password" className="text-orange-500 hover:underline">
-            Forgot password?
-          </Link>
-        </p>
       </form>
     </div>
   );
