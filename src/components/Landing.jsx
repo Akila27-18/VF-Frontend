@@ -1,12 +1,12 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination } from "swiper/modules";
-
 import "swiper/css";
 import "swiper/css/pagination";
 
-// Hero Carousel Images
+// Hero Images
 import finance1 from "../assets/illustrations/finance-1.jpg";
 import finance2 from "../assets/illustrations/finance-2.jpg";
 import finance3 from "../assets/illustrations/finance-3.jpg";
@@ -21,148 +21,143 @@ import highlight1 from "../assets/illustrations/highlight-1.jpg";
 import highlight2 from "../assets/illustrations/highlight-2.jpg";
 import highlight3 from "../assets/illustrations/highlight-3.jpg";
 
+
 // Feature Card Component
 const FeatureCard = ({ imgSrc, title, description }) => (
   <motion.div
     whileHover={{ scale: 1.05 }}
-    className="bg-white shadow-lg rounded-xl p-5 flex flex-col items-center text-center"
+    className="bg-white shadow-md rounded-xl p-6 flex flex-col items-center text-center"
   >
-    <img src={imgSrc} alt={title} className="w-16 h-16 mb-4 object-contain" />
-    <h3 className="font-semibold text-lg mb-2">{title}</h3>
-    <p className="text-gray-500 text-sm">{description}</p>
+    <img src={imgSrc} alt={title} className="w-14 h-14 mb-4 object-contain" />
+    <h3 className="font-semibold text-lg">{title}</h3>
+    <p className="text-gray-500 text-sm mt-2">{description}</p>
   </motion.div>
 );
+
 
 export default function Landing() {
   return (
     <div
-      className="px-6 md:px-16 py-12 relative"
+      className="px-6 md:px-16 py-12 relative overflow-hidden"
       style={{
         background: "linear-gradient(135deg, #fff 0%, #fff7f2 40%, #ffe6d5 100%)",
       }}
     >
+
       {/* Background Shapes */}
-      <div className="absolute top-0 right-0 w-64 h-64 bg-orange-200 opacity-30 blur-3xl rounded-full"></div>
-      <div className="absolute bottom-0 left-0 w-64 h-64 bg-orange-300 opacity-20 blur-3xl rounded-full"></div>
+      <div className="absolute top-0 right-0 w-72 h-72 bg-orange-200 opacity-30 blur-3xl rounded-full"></div>
+      <div className="absolute bottom-0 left-0 w-72 h-72 bg-orange-300 opacity-20 blur-3xl rounded-full"></div>
 
-      {/* Hero Section */}
-      <section className="grid md:grid-cols-2 gap-10 items-center relative z-10">
-        <div>
-          <motion.h1
-            initial={{ x: -20, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ delay: 0.1 }}
-            className="text-4xl font-bold"
-          >
+
+      {/* ---------------------------- HERO SECTION ---------------------------- */}
+      <section className="grid md:grid-cols-2 gap-12 items-center relative z-10 mt-10">
+
+        {/* Left Text Section */}
+        <motion.div
+          initial={{ x: -20, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+        >
+          <h1 className="text-4xl md:text-5xl font-bold leading-tight">
             Manage money together — simply
-          </motion.h1>
+          </h1>
 
-          <motion.p
-            initial={{ x: -10, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="mt-4 text-gray-600"
-          >
-            Vetri Finance helps couples and individuals track expenses, plan
-            budgets, receive summarized financial news, and collaborate with
-            partner chat.
-          </motion.p>
+          <p className="mt-4 text-gray-600 text-base md:text-lg">
+            Vetri Finance helps couples and individuals track expenses, budget better,
+            receive financial insights, and manage shared money effortlessly.
+          </p>
 
-          <div className="mt-6 flex gap-3">
-            <a
-              href="/signup"
-              className="px-5 py-3 rounded-lg bg-orange-500 text-white font-medium hover:bg-orange-600 transition"
+          {/* Buttons */}
+          <div className="mt-6 flex gap-4">
+            <Link
+              to="/get-started"
+              className="px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
             >
-              Sign up
-            </a>
-            <a
-              href="/learn-more"
-              className="px-5 py-3 rounded-lg border border-gray-300 hover:bg-gray-100 transition"
+              Get Started
+            </Link>
+
+            <Link
+              to="/learn-more"
+              className="px-6 py-3 border rounded-lg hover:bg-gray-100 transition"
             >
-              Learn more
-            </a>
+              Learn More
+            </Link>
           </div>
 
-          <div className="mt-6 text-xs text-gray-500">
-            Designed for India-first UPI and bank integrations.
+          <div className="mt-4 text-sm text-gray-500">
+            Built for India-first UPI and bank integrations.
           </div>
-        </div>
+        </motion.div>
 
-        {/* Swiper Carousel */}
+
+        {/* Right Swiper Section */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.3 }}
-          className="rounded-xl shadow-xl overflow-hidden"
+          transition={{ delay: 0.2 }}
+          className="rounded-xl shadow-xl overflow-hidden h-72 md:h-80"
         >
           <Swiper
             modules={[Autoplay, Pagination]}
             autoplay={{ delay: 3000 }}
             pagination={{ clickable: true }}
-            loop={true}
-            className="w-full h-72"
+            loop
+            className="w-full h-full"
           >
             <SwiperSlide>
-              <img src={finance1} alt="Finance Slide 1" className="object-cover w-full h-full" />
+              <img src={finance1} className="w-full h-full object-cover" />
             </SwiperSlide>
             <SwiperSlide>
-              <img src={finance2} alt="Finance Slide 2" className="object-cover w-full h-full" />
+              <img src={finance2} className="w-full h-full object-cover" />
             </SwiperSlide>
             <SwiperSlide>
-              <img src={finance3} alt="Finance Slide 3" className="object-cover w-full h-full" />
+              <img src={finance3} className="w-full h-full object-cover" />
             </SwiperSlide>
           </Swiper>
         </motion.div>
+
       </section>
 
-      {/* Features Section */}
-      <section className="mt-20 grid md:grid-cols-3 gap-8">
+
+
+
+      {/* ---------------------------- FEATURES ---------------------------- */}
+      <section className="mt-24 grid md:grid-cols-3 gap-10">
         <FeatureCard
           imgSrc={iconBudget}
           title="Budget Planning"
-          description="Create and manage monthly budgets effortlessly with real-time tracking."
+          description="Plan smart budgets with real-time spending insights."
         />
         <FeatureCard
           imgSrc={iconExpense}
           title="Expense Tracking"
-          description="Track your expenses automatically through UPI and bank integrations."
+          description="Auto-track your spending via UPI & bank sync."
         />
         <FeatureCard
           imgSrc={iconChat}
           title="Partner Chat"
-          description="Collaborate with your partner, discuss finances and plan together."
+          description="Collaborate with your partner & split expenses easily."
         />
       </section>
 
-      {/* Highlight Images */}
-      <section className="mt-20 grid md:grid-cols-3 gap-4">
-        <motion.img
-          src={highlight1}
-          alt="Highlight 1"
-          className="rounded-xl w-full h-48 object-cover"
-          whileHover={{ scale: 1.05 }}
-        />
-        <motion.img
-          src={highlight2}
-          alt="Highlight 2"
-          className="rounded-xl w-full h-48 object-cover"
-          whileHover={{ scale: 1.05 }}
-        />
-        <motion.img
-          src={highlight3}
-          alt="Highlight 3"
-          className="rounded-xl w-full h-48 object-cover"
-          whileHover={{ scale: 1.05 }}
-        />
+
+
+
+      {/* ---------------------------- HIGHLIGHTS ---------------------------- */}
+      <section className="mt-24 grid md:grid-cols-3 gap-6">
+        <motion.img src={highlight1} className="rounded-xl h-48 md:h-52 w-full object-contain" whileHover={{ scale: 1.05 }} />
+        <motion.img src={highlight2} className="rounded-xl h-48 md:h-52 w-full object-contain" whileHover={{ scale: 1.05 }} />
+        <motion.img src={highlight3} className="rounded-xl h-48 md:h-52 w-full object-contain" whileHover={{ scale: 1.05 }} />
       </section>
 
-      {/* CTA Section */}
-      <section className="mt-20 text-center relative z-10">
+
+
+
+      {/* ---------------------------- CTA SECTION ---------------------------- */}
+      <section className="mt-28 text-center relative z-10">
         <motion.h2
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.1 }}
-          className="text-3xl font-bold mb-4"
+          className="text-3xl md:text-4xl font-bold mb-4"
         >
           Start managing your finances today
         </motion.h2>
@@ -170,23 +165,20 @@ export default function Landing() {
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="text-gray-600 mb-6"
+          className="text-gray-600 mb-6 max-w-xl mx-auto"
         >
           Join Vetri Finance and take control of your financial future with
-          powerful tools tailored for Indian users.
+          powerful tools designed for Indian users.
         </motion.p>
 
-        <motion.a
-          href="/get-started"
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="px-6 py-3 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition"
+        <Link
+          to="/get-started"
+          className="px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
         >
           Get Started
-        </motion.a>
+        </Link>
       </section>
+
     </div>
   );
 }

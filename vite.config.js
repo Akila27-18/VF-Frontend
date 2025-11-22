@@ -1,17 +1,13 @@
 // vite.config.js
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import path from "path";
 
 export default defineConfig({
   plugins: [react()],
-  base: '/',                    // ← important for Render
-  build: {
-    outDir: 'dist',
-    sourcemap: false,
+  resolve: {
+    alias: {
+      src: path.resolve(__dirname, "src"),
+    },
   },
-  server: {
-    host: true,                 // needed for Docker/Render sometimes
-    port: 5173,
-    strictPort: true,
-  },
-})
+});

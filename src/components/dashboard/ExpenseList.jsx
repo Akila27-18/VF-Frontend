@@ -1,42 +1,68 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import ExpenseCard from "../ExpenseCard";
+import axios from "axios";
 
-export default function ExpenseList({ expenses = [], onEdit, onDelete, visibleCount = 5 }) {
-  const containerRef = useRef(null);
-  const [cardHeight, setCardHeight] = useState(0);
+const categories = ["All", "Food", "Travel", "Shopping", "Bills", "Health", "Other"];
+const API_URL = import.meta.env.VITE_BACKEND_URL;
+
+export default function ExpenseList() {
+  const [list, setList] = useState([]);
+  const [filter, setFilter] = useState("All");
+
+  const load = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/expenses`);
+      setList(res.data);
+    } catch (e) {
+      console.log("Expense load failed", e);
+    }
+  };
 
   useEffect(() => {
-    if (containerRef.current) {
-      const firstCard = containerRef.current.querySelector(".expense-card");
-      if (firstCard) {
-        setCardHeight(firstCard.offsetHeight);
-      }
-    }
-  }, [expenses]);
+    load();
+    const interval = setInterval(load, 10000); // Auto refresh
+    return () => clearInterval(interval);
+  }, []);
 
-  if (!expenses.length) {
-    return (
-      <div className="bg-white rounded-2xl p-6 shadow text-sm text-[#6F6F6F]">
-        No expenses yet
-      </div>
-    );
-  }
+  const filtered =
+    filter === "All" ? list : list.filter((e) => e.category === filter);
+
+  const handleEdit = async (exp) => {
+    await axios.put(`${API_URL}/expenses/${exp.id}`, exp);
+    load();
+  };
+
+  const handleDelete = async (id) => {
+    await axios.delete(`${API_URL}/expenses/${id}`);
+    load();
+  };
 
   return (
-    <div
-      ref={containerRef}
-      className="bg-white rounded-2xl p-4 shadow overflow-y-auto"
-      style={{
-        maxHeight: cardHeight ? `${cardHeight * visibleCount}px` : "auto",
-      }}
-    >
-      <div className="grid md:grid-cols-2 gap-4">
-        {expenses.map((e) => (
-          <div key={e.id} className="expense-card">
-            <ExpenseCard expense={e} onEdit={onEdit} onDelete={onDelete} />
-          </div>
+    <div className="space-y-4">
+      {/* Filter */}
+      <select
+        value={filter}
+        onChange={(e) => setFilter(e.target.value)}
+        className="border rounded p-2"
+      >
+        {categories.map((c) => (
+          <option key={c}>{c}</option>
         ))}
-      </div>
+      </select>
+
+      {/* Expense Cards */}
+      {filtered.map((exp) => (
+        <ExpenseCard
+          key={exp.id}
+          expense={exp}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
+      ))}
+
+      {filtered.length === 0 && (
+        <p className="text-gray-500">No expenses found.</p>
+      )}
     </div>
   );
 }

@@ -1,17 +1,22 @@
-// App.jsx
 import React from "react";
-import { Routes, Route, useLocation } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
+import { Routes, Route } from "react-router-dom";
 
 /* Components */
 import Header from "./components/Header";
-import Landing from "./components/Landing";
 import Dashboard from "./components/Dashboard";
 
-/* Dashboard pages */
+/* Pages */
+import Landing from "./components/Landing";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import ForgotPassword from "./components/ForgotPassword";
+import NewsFeed from "./components/NewsFeed";
+import LearnMore from "./components/LearnMore";
+import GetStarted from "./components/GetStarted";
 import Insights from "./pages/Insights";
 import Payments from "./pages/Payments";
 
+<<<<<<< HEAD
 /* Public pages */
 import Signup from "./pages/Signup";
 import Login from "./pages/Login";
@@ -20,28 +25,15 @@ import LearnMore from "./components/LearnMore";
 import GetStarted from "./components/GetStarted";
 
 /* Protected route wrapper */
+=======
+/* Protected wrapper */
+>>>>>>> 53b22fd (first commit)
 import ProtectedRoute from "./components/ProtectedRoute";
 
-/* Resources page */
-import ResourcePage from "./pages/ResourcePage";
-
 export default function App() {
-  const location = useLocation();
-
-  /** Hide header on these routes */
-  const hideHeaderRoutes = ["/login", "/signup", "/forgot-password"];
-  const shouldHideHeader = hideHeaderRoutes.includes(location.pathname);
-
-  /** Page animation */
-  const pageTransition = {
-    initial: { opacity: 0, x: 40 },
-    animate: { opacity: 1, x: 0 },
-    exit: { opacity: 0, x: -40 },
-    transition: { duration: 0.35 },
-  };
-
   return (
     <div className="min-h-screen bg-white">
+<<<<<<< HEAD
       {!shouldHideHeader && <Header />}
 
       <main className="max-w-6xl mx-auto p-6 relative">
@@ -119,6 +111,45 @@ export default function App() {
             />
           </Routes>
         </AnimatePresence>
+=======
+      <Header />
+      <main className="max-w-6xl mx-auto p-6">
+        <Routes>
+          {/* Public pages */}
+          <Route path="/" element={<Landing />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/learn-more" element={<LearnMore />} />
+          <Route path="/get-started" element={<GetStarted />} />
+
+          {/* Protected pages */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/insights"
+            element={
+              <ProtectedRoute>
+                <Insights />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/payments"
+            element={
+              <ProtectedRoute>
+                <Payments />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+>>>>>>> 53b22fd (first commit)
       </main>
     </div>
   );

@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+// src/components/SplitBillModal.jsx
+import React, { useState, useEffect } from "react";
 
 export default function SplitBillModal({ open, onClose, users = [], onAdd }) {
   const [title, setTitle] = useState("");
@@ -6,7 +7,14 @@ export default function SplitBillModal({ open, onClose, users = [], onAdd }) {
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [paidBy, setPaidBy] = useState("");
 
-  if (!open) return null;
+  useEffect(() => {
+    if (open) {
+      setTitle("");
+      setTotal("");
+      setSelectedUsers([]);
+      setPaidBy("");
+    }
+  }, [open]);
 
   const toggleUser = (user) => {
     setSelectedUsers((prev) =>
@@ -17,16 +25,16 @@ export default function SplitBillModal({ open, onClose, users = [], onAdd }) {
   };
 
   const handleSubmit = () => {
-    if (!title || !total || !selectedUsers.length || !paidBy)
+    if (!title || !total || !selectedUsers.length || !paidBy) {
       return alert("Please fill all fields");
+    }
 
     const amount = Number(total);
     const perPerson = amount / selectedUsers.length;
 
-    // Create one expense per participant (your original logic)
     const newExpenses = selectedUsers.map((user) => ({
-      id: Date.now() + Math.random(),
-      title,
+      id: `${Date.now()}_${user}`,
+      description: title,
       amount: perPerson,
       category: "Shared",
       shared: true,
@@ -36,25 +44,15 @@ export default function SplitBillModal({ open, onClose, users = [], onAdd }) {
     }));
 
     onAdd(newExpenses);
-
-    // Close modal first (smoother)
     onClose();
-
-    // Reset values after closing
-    setTimeout(() => {
-      setTitle("");
-      setTotal("");
-      setSelectedUsers([]);
-      setPaidBy("");
-    }, 50);
   };
+
+  if (!open) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl shadow p-6 w-full max-w-md animate-fadeIn">
+      <div className="bg-white rounded-xl shadow p-6 w-full max-w-md">
         <h2 className="text-xl font-semibold mb-4">Split Bill</h2>
-
-        {/* Title */}
         <div className="mb-3">
           <label className="block text-sm font-medium">Title</label>
           <input
@@ -65,22 +63,18 @@ export default function SplitBillModal({ open, onClose, users = [], onAdd }) {
             placeholder="Dinner, Utilities..."
           />
         </div>
-
-        {/* Total Amount */}
         <div className="mb-3">
           <label className="block text-sm font-medium">Total Amount</label>
           <input
             type="number"
             value={total}
-            onChange={(e) => setTotal(Number(e.target.value))}
+            onChange={(e) => setTotal(e.target.value)}
             className="w-full border rounded px-2 py-1 mt-1"
             placeholder="₹0"
           />
         </div>
-
-        {/* Participants */}
         <div className="mb-3">
-          <label className="block text-sm font-medium">Select Participants</label>
+          <label className="block text-sm font-medium">Participants</label>
           <div className="flex flex-wrap gap-2 mt-1">
             {users.map((user) => (
               <button
@@ -97,8 +91,6 @@ export default function SplitBillModal({ open, onClose, users = [], onAdd }) {
             ))}
           </div>
         </div>
-
-        {/* Paid By */}
         <div className="mb-3">
           <label className="block text-sm font-medium">Paid By</label>
           <select
@@ -108,27 +100,13 @@ export default function SplitBillModal({ open, onClose, users = [], onAdd }) {
           >
             <option value="">Select payer</option>
             {selectedUsers.map((user) => (
-              <option key={user} value={user}>
-                {user}
-              </option>
+              <option key={user} value={user}>{user}</option>
             ))}
           </select>
         </div>
-
-        {/* Buttons */}
         <div className="flex justify-end gap-2 mt-4">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSubmit}
-            className="px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-600"
-          >
-            Split
-          </button>
+          <button onClick={onClose} className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300">Cancel</button>
+          <button onClick={handleSubmit} className="px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-600">Split</button>
         </div>
       </div>
     </div>

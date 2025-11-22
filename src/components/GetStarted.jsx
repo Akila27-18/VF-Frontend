@@ -7,6 +7,18 @@ import { Autoplay, Pagination } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/pagination";
 
+// IMPORT ALL IMAGES (Fix)
+import heroImage from "../assets/illustrations/get-started-hero.jpg";
+
+import iconBudget from "../assets/icons/budget.jpg";
+import iconUpi from "../assets/icons/upi.jpg";
+import iconPartner from "../assets/icons/partner.png";
+
+import walk1 from "../assets/illustrations/walkthrough-1.jpg";
+import walk2 from "../assets/illustrations/walkthrough-2.jpg";
+import walk3 from "../assets/illustrations/walkthrough-3.jpg";
+
+
 export default function GetStarted() {
   const nav = useNavigate();
 
@@ -53,7 +65,7 @@ export default function GetStarted() {
           animate={{ scale: 1, opacity: 1 }}
         >
           <img
-            src="/assets/illustrations/get-started-hero.jpg"
+            src={heroImage}
             className="w-full h-72 object-cover rounded-xl shadow-xl"
             alt="Getting Started Illustration"
           />
@@ -63,19 +75,17 @@ export default function GetStarted() {
       {/* FEATURES */}
       <section className="mt-16 grid md:grid-cols-3 gap-6">
         <Feature
-          img="/assets/icons/budget.jpg"
+          img={iconBudget}
           title="Set up budgets"
           text="Create and manage monthly budgets effortlessly."
         />
-
         <Feature
-          img="/assets/icons/upi.jpg"
+          img={iconUpi}
           title="Connect UPI & Bank"
           text="Auto-capture transactions from linked accounts."
         />
-
         <Feature
-          img="/assets/icons/partner.png"
+          img={iconPartner}
           title="Invite Partner"
           text="Collaborate and track shared expenses in realtime."
         />
@@ -100,7 +110,7 @@ export default function GetStarted() {
         >
           <SwiperSlide>
             <ImageSlide
-              img="/assets/illustrations/walkthrough-1.jpg"
+              img={walk1}
               title="Automatic expense tracking"
               text="Linked UPI and bank transactions are categorized instantly."
             />
@@ -108,7 +118,7 @@ export default function GetStarted() {
 
           <SwiperSlide>
             <ImageSlide
-              img="/assets/illustrations/walkthrough-2.jpg"
+              img={walk2}
               title="Plan monthly budgets"
               text="Visualize and adjust planned vs actual spending."
             />
@@ -116,7 +126,7 @@ export default function GetStarted() {
 
           <SwiperSlide>
             <ImageSlide
-              img="/assets/illustrations/walkthrough-3.jpg"
+              img={walk3}
               title="Partner chat & bill splitting"
               text="Discuss expenses and split bills inside chat."
             />
@@ -145,6 +155,7 @@ export default function GetStarted() {
     </div>
   );
 }
+
 
 // Feature Card Component
 const Feature = ({ img, title, text }) => (
