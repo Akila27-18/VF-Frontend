@@ -20,7 +20,7 @@ import Insights from "./pages/Insights";
 import Payments from "./pages/Payments";
 
 /* Optional Resource Page (if exists) */
-import ResourcePage from "./components/ResourcePage";
+import ResourcePage from "./pages/ResourcePage";
 
 /* Page transition animation */
 const pageTransition = {
