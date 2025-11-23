@@ -1,14 +1,12 @@
-// src/pages/Login.jsx
 import React, { useState, useContext } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || "https://vf-backend-1.onrender.com";
 
 export default function Login() {
-  const navigate = useNavigate();
   const { login } = useContext(AuthContext);
-
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -26,27 +24,13 @@ export default function Login() {
         body: JSON.stringify({ email, password }),
       });
 
-      const contentType = res.headers.get("content-type");
-      let data;
+      const data = await res.json();
 
-      if (contentType?.includes("application/json")) {
-        data = await res.json();
-      } else {
-        throw new Error("Unexpected server response");
-      }
+      if (!res.ok) throw new Error(data.detail || "Login failed");
 
-      if (!res.ok) {
-        throw new Error(data.error || "Login failed");
-      }
-
-      // Save token and login
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("userEmail", email);
-      login(data.token);
-
+      login(data.access); // save token
       navigate("/dashboard");
     } catch (err) {
-      console.error(err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -57,9 +41,9 @@ export default function Login() {
     <div className="max-w-md mx-auto mt-20 p-6 bg-white rounded-xl shadow">
       <h1 className="text-2xl font-bold mb-4">Login</h1>
       {error && <div className="text-red-500 mb-3">{error}</div>}
-      <form className="space-y-3" onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="space-y-3">
         <div>
-          <label className="block text-sm font-medium mb-1">Email</label>
+          <label>Email</label>
           <input
             type="email"
             required
@@ -69,7 +53,7 @@ export default function Login() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">Password</label>
+          <label>Password</label>
           <input
             type="password"
             required
@@ -86,6 +70,10 @@ export default function Login() {
           {loading ? "Logging in..." : "Login"}
         </button>
       </form>
+      <div className="mt-4 flex justify-between text-sm">
+        <Link to="/signup" className="text-orange-500 hover:underline">Sign Up</Link>
+        <Link to="/forgot-password" className="text-orange-500 hover:underline">Forgot Password?</Link>
+      </div>
     </div>
   );
 }
