@@ -12,7 +12,7 @@ import Landing from "./components/Landing";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ForgotPassword from "./components/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
+import ResetPassword from "./components/ResetPassword";
 import LearnMore from "./components/LearnMore";
 import GetStarted from "./components/GetStarted";
 
