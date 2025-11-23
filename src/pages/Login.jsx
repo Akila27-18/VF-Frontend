@@ -17,32 +17,30 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_URL}/auth/login/`, {
+      const res = await fetch(`${API_URL}/auth/login/`, {  // corrected endpoint
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
 
-      // Ensure response is JSON before parsing
-      const text = await res.text();
+      // handle HTML/non-JSON response
       let data;
       try {
-        data = JSON.parse(text);
+        data = await res.json();
       } catch {
-        throw new Error("Unexpected response from server: " + text);
+        const text = await res.text();
+        throw new Error(`Unexpected response from server: ${text}`);
       }
 
-      if (!res.ok) throw new Error(data.detail || data.error || "Login failed");
+      if (!res.ok) throw new Error(data.error || "Login failed");
 
       // Save token and user email
-      localStorage.setItem("token", data.access || data.token); // depends on backend JWT key
+      localStorage.setItem("token", data.token);
       localStorage.setItem("userEmail", email);
 
-      navigate("/dashboard"); // redirect
+      navigate("/dashboard"); // redirect to dashboard
     } catch (err) {
-      console.error("Login error:", err);
+      console.error(err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -83,12 +81,8 @@ export default function Login() {
         </button>
       </form>
       <div className="mt-4 text-sm flex justify-between">
-        <Link to="/signup" className="text-orange-500 hover:underline">
-          Sign Up
-        </Link>
-        <Link to="/password-reset" className="text-orange-500 hover:underline">
-          Forgot Password?
-        </Link>
+        <Link to="/signup" className="text-orange-500 hover:underline">Sign Up</Link>
+        <Link to="/password-reset" className="text-orange-500 hover:underline">Forgot Password?</Link>
       </div>
     </div>
   );

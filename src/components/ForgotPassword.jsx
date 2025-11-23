@@ -1,35 +1,68 @@
+// src/components/ForgotPassword.jsx
+import React, { useState } from "react";
+
+const API_URL = import.meta.env.VITE_BACKEND_URL || "https://vf-backend-1.onrender.com";
+
 export default function ForgotPassword() {
-  const api = useApi(); // initialize the hook
   const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(""); setMessage("");
+    setError("");
+    setMessage("");
+    setLoading(true);
 
-    const res = await api.post("/auth/password-reset/", { email });
-    if (res.ok) setMessage(res.data.message);
-    else setError(res.data?.error || "Failed to send reset email");
+    try {
+      const res = await fetch(`${API_URL}/auth/password-reset/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        const text = await res.text();
+        throw new Error(`Unexpected response: ${text}`);
+      }
+
+      if (!res.ok) throw new Error(data.error || "Request failed");
+
+      setMessage("Password reset email sent. Check your inbox.");
+    } catch (err) {
+      console.error(err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow w-full max-w-md text-center">
-        <h2 className="text-xl font-semibold mb-4">Forgot Password</h2>
-        {message && <div className="text-green-600 mb-2">{message}</div>}
-        {error && <div className="text-red-600 mb-2">{error}</div>}
-
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full mb-2 border rounded px-3 py-2"
-        />
-
-        <button type="submit" className="w-full bg-orange-500 text-white py-2 rounded hover:bg-orange-600">
-          Send Reset Link
+    <div className="max-w-md mx-auto mt-20 p-6 bg-white rounded-xl shadow">
+      <h1 className="text-2xl font-bold mb-4">Forgot Password</h1>
+      {error && <div className="text-red-500 mb-3">{error}</div>}
+      {message && <div className="text-green-500 mb-3">{message}</div>}
+      <form onSubmit={handleSubmit} className="space-y-3">
+        <div>
+          <label className="block text-sm font-medium mb-1">Email</label>
+          <input
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full border rounded px-3 py-2"
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-orange-500 text-white py-2 rounded hover:bg-orange-600"
+        >
+          {loading ? "Sending..." : "Send Reset Email"}
         </button>
       </form>
     </div>
