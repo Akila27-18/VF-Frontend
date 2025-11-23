@@ -32,17 +32,22 @@ export default function Signup() {
         body: JSON.stringify({ email, password }),
       });
 
+      const contentType = res.headers.get("content-type");
       let data;
-      try {
+      if (contentType && contentType.includes("application/json")) {
         data = await res.json();
-      } catch {
+      } else {
         const text = await res.text();
-        throw new Error(`Unexpected response from server: ${text}`);
+        console.warn("Unexpected response from server:", text);
+        throw new Error("Unexpected server response");
       }
 
       if (!res.ok) throw new Error(data.error || "Signup failed");
 
-      setSuccess("Signup successful! Redirecting to login...");
+      setSuccess("Account created successfully! You can now login.");
+      setEmail("");
+      setPassword("");
+      setConfirmPassword("");
       setTimeout(() => navigate("/login"), 1500);
     } catch (err) {
       console.error(err);
@@ -97,7 +102,7 @@ export default function Signup() {
         </button>
       </form>
       <div className="mt-4 text-sm flex justify-between">
-        <Link to="/login" className="text-orange-500 hover:underline">Already have an account? Login</Link>
+        <Link to="/login" className="text-orange-500 hover:underline">Already have an account?</Link>
       </div>
     </div>
   );

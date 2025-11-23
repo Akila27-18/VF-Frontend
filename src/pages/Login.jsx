@@ -1,10 +1,11 @@
-// src/pages/Login.jsx
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || "https://vf-backend-1.onrender.com";
 
 export default function Login() {
+  const { login } = useContext(AuthContext);
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -17,30 +18,24 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_URL}/auth/login/`, {  // corrected endpoint
+      const res = await fetch(`${API_URL}/auth/login/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
 
-      // handle HTML/non-JSON response
+      const contentType = res.headers.get("content-type");
       let data;
-      try {
-        data = await res.json();
-      } catch {
-        const text = await res.text();
-        throw new Error(`Unexpected response from server: ${text}`);
-      }
+      if (contentType?.includes("application/json")) data = await res.json();
+      else throw new Error("Unexpected server response");
 
       if (!res.ok) throw new Error(data.error || "Login failed");
 
-      // Save token and user email
-      localStorage.setItem("token", data.token);
+      login(data.token); // store token via context
       localStorage.setItem("userEmail", email);
 
-      navigate("/dashboard"); // redirect to dashboard
+      navigate("/dashboard");
     } catch (err) {
-      console.error(err);
       setError(err.message);
     } finally {
       setLoading(false);
