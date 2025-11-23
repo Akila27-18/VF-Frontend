@@ -1,10 +1,10 @@
 // src/components/dashboard/Insights.jsx
 import React, { useEffect, useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import PieChartCard from "./PieChartCard";
-import SmartInsights from "./SmartInsights";
+import PieChartCard from "../components/dashboard/PieChartCard";
+import SmartInsights from "../components/dashboard/SmartInsights";
 
-const API_URL = import.meta.env.VITE_BACKEND_URL || "http://127.0.0.1:5000";
+const API_URL = import.meta.env.VITE_BACKEND_URL || "https://vf-backend-1.onrender.com";
 
 export default function Insights() {
   const [expenses, setExpenses] = useState([]);

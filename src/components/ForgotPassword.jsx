@@ -1,7 +1,5 @@
-import React, { useState } from "react";
-import api from "../lib/api";
-
 export default function ForgotPassword() {
+  const api = useApi(); // initialize the hook
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
