@@ -17,23 +17,32 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_URL}/login/`, {
+      const res = await fetch(`${API_URL}/auth/login/`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await res.json();
+      // Ensure response is JSON before parsing
+      const text = await res.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw new Error("Unexpected response from server: " + text);
+      }
 
-      if (!res.ok) throw new Error(data.error || "Login failed");
+      if (!res.ok) throw new Error(data.detail || data.error || "Login failed");
 
       // Save token and user email
-      localStorage.setItem("token", data.token);
+      localStorage.setItem("token", data.access || data.token); // depends on backend JWT key
       localStorage.setItem("userEmail", email);
 
-      navigate("/dashboard"); // redirect to dashboard
+      navigate("/dashboard"); // redirect
     } catch (err) {
-      console.error(err);
+      console.error("Login error:", err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -74,8 +83,12 @@ export default function Login() {
         </button>
       </form>
       <div className="mt-4 text-sm flex justify-between">
-        <Link to="/signup" className="text-orange-500 hover:underline">Sign Up</Link>
-        <Link to="/password-reset" className="text-orange-500 hover:underline">Forgot Password?</Link>
+        <Link to="/signup" className="text-orange-500 hover:underline">
+          Sign Up
+        </Link>
+        <Link to="/password-reset" className="text-orange-500 hover:underline">
+          Forgot Password?
+        </Link>
       </div>
     </div>
   );
