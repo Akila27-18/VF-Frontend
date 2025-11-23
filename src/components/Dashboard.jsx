@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 
-/* Dashboard components */
+/* Components */
 import DashboardHeader from "./dashboard/DashboardHeader";
 import QuickActions from "./dashboard/QuickActions";
 import ExpenseCard from "./ExpenseCard";
@@ -13,6 +13,8 @@ import SummaryCard from "./dashboard/SummaryCard";
 import SmartInsights from "./dashboard/SmartInsights";
 import PieChartCard from "./dashboard/PieChartCard";
 import PieChart from "./dashboard/PieChart";
+import ForgotPassword from "./ForgotPassword";
+
 
 /* Images */
 import heroImg from "../assets/dashboard/hero.jpg";
@@ -20,12 +22,14 @@ import addExpenseImg from "../assets/dashboard/add-expense.jpg";
 import splitBillImg from "../assets/dashboard/split-bill.jpg";
 import insightsImg from "../assets/dashboard/insights.jpg";
 import paymentsImg from "../assets/dashboard/payments.jpg";
-import ChatPanel from "./ChatPanel";
 
-const API_URL = import.meta.env.VITE_BACKEND_URL || "http://127.0.0.1:5000";
+/* API Hook */
+import { useApi } from "../lib/api";
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const api = useApi();
+
   const [expenses, setExpenses] = useState([]);
   const [filteredCategory, setFilteredCategory] = useState("All");
   const [search, setSearch] = useState("");
@@ -36,43 +40,24 @@ export default function Dashboard() {
 
   const dashboardUsers = ["Alice", "Bob", "Charlie"];
 
-  /* ----------------- Auth ----------------- */
-  const getTokenOrRedirect = () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      navigate("/login");
-      return null;
-    }
-    return token;
-  };
-
-  /* ----------------- Fetch expenses ----------------- */
+  /* ----------------- Fetch Expenses ----------------- */
   useEffect(() => {
-    const token = getTokenOrRedirect();
-    if (!token) return;
-
     const saved = localStorage.getItem("expenses");
     if (saved) {
       setExpenses(JSON.parse(saved));
       setLoading(false);
     }
 
-    async function fetchExpenses() {
-      try {
-        const res = await fetch(`${API_URL}/expenses`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) throw new Error("Failed to fetch expenses");
-        const data = await res.json();
-        setExpenses(data.sort((a, b) => (b.order || 0) - (a.order || 0)));
-        localStorage.setItem("expenses", JSON.stringify(data));
-      } catch (err) {
-        console.error(err);
-        setError(err.message || "Error loading dashboard");
-      } finally {
-        setLoading(false);
+    const fetchExpenses = async () => {
+      const res = await api.get("/api/expenses/");
+      if (res.ok) {
+        setExpenses(res.data.sort((a, b) => (b.order || 0) - (a.order || 0)));
+        localStorage.setItem("expenses", JSON.stringify(res.data));
+      } else {
+        setError(res.data?.error || "Failed to load expenses");
       }
-    }
+      setLoading(false);
+    };
 
     fetchExpenses();
   }, []);
@@ -96,7 +81,7 @@ export default function Dashboard() {
     return list;
   }, [expenses, filteredCategory, search]);
 
-  /* ----------------- Pie chart (orange-only) ----------------- */
+  /* ----------------- Pie Chart Data ----------------- */
   const pieData = useMemo(() => {
     const totals = {};
     expenses.forEach((e) => {
@@ -109,58 +94,36 @@ export default function Dashboard() {
         {
           data: Object.values(totals),
           backgroundColor: [
-            "#FF6A00",
-            "#FF7F26",
-            "#FF934D",
-            "#FFA873",
-            "#FFBD99",
-            "#FFD2BF",
+            "#FF6A00", "#FF7F26", "#FF934D", "#FFA873", "#FFBD99", "#FFD2BF"
           ].slice(0, Object.keys(totals).length),
         },
       ],
     };
   }, [expenses]);
 
-  /* ----------------- CRUD ----------------- */
+  /* ----------------- CRUD Functions ----------------- */
   const saveExpensesLocal = (data) => {
     setExpenses(data);
     localStorage.setItem("expenses", JSON.stringify(data));
   };
 
   const handleAddExpense = async (expense) => {
-    const token = getTokenOrRedirect();
-    if (!token) return;
     const payload = { ...expense, userId: localStorage.getItem("userId") };
-    try {
-      const res = await fetch(`${API_URL}/expenses`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) throw new Error("Failed to add expense");
-      const created = await res.json();
-      saveExpensesLocal([created, ...expenses]);
-    } catch (err) {
-      alert("Failed to add expense");
-      console.error(err);
-    } finally {
+    const res = await api.post("/api/expenses/", payload);
+    if (res.ok) {
+      saveExpensesLocal([res.data, ...expenses]);
       setShowAdd(false);
+    } else {
+      alert(res.data?.error || "Failed to add expense");
     }
   };
 
   const handleDeleteExpense = async (id) => {
-    const token = getTokenOrRedirect();
-    if (!token) return;
-    try {
-      const res = await fetch(`${API_URL}/expenses/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error("Failed to delete expense");
+    const res = await api.delete(`/api/expenses/${id}/`);
+    if (res.ok) {
       saveExpensesLocal(expenses.filter((e) => e.id !== id));
-    } catch (err) {
-      alert("Failed to delete expense");
-      console.error(err);
+    } else {
+      alert(res.data?.error || "Failed to delete expense");
     }
   };
 
@@ -181,7 +144,7 @@ export default function Dashboard() {
         <QuickActions img={splitBillImg} title="Split Bill" onClick={() => setShowSplit(true)} />
       </div>
 
-      {/* Summary + SmartInsights */}
+      {/* Summary + Insights */}
       <div className="grid md:grid-cols-2 gap-6">
         <SummaryCard expenses={expenses} />
         <SmartInsights expenses={expenses} />
@@ -245,8 +208,7 @@ export default function Dashboard() {
         {/* Right Sidebar */}
         <div className="order-first lg:order-last">
           <SafeAside
-            wsUrl={`${API_URL.replace(/^http/, "ws")}/ws/chat/`}
-          
+            wsUrl={`${import.meta.env.VITE_BACKEND_URL?.replace(/^http/, "ws") || "ws://127.0.0.1:5000"}/ws/chat/`}
             stockSymbols={["GOOGL","AMZN","AAPL","TSLA","MSFT","RELIANCE","TCS","HDFC"]}
           />
         </div>

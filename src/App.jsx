@@ -11,7 +11,8 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Landing from "./components/Landing";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
-import ForgotPassword from "./components/ForgotPassword";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import LearnMore from "./components/LearnMore";
 import GetStarted from "./components/GetStarted";
 
@@ -19,7 +20,7 @@ import GetStarted from "./components/GetStarted";
 import Insights from "./pages/Insights";
 import Payments from "./pages/Payments";
 
-/* Optional Resource Page (if exists) */
+/* Optional Resource Page */
 import ResourcePage from "./pages/ResourcePage";
 
 /* Page transition animation */
@@ -32,8 +33,15 @@ const pageTransition = {
 
 export default function App() {
   const location = useLocation();
-  const hiddenRoutes = ["/login", "/signup"];
-  const shouldHideHeader = hiddenRoutes.includes(location.pathname);
+  const hiddenRoutes = [
+    "/login",
+    "/signup",
+    "/forgot-password",
+    "/password-reset-confirm/:uid/:token",
+  ];
+  const shouldHideHeader = hiddenRoutes.some((path) =>
+    location.pathname.startsWith(path.replace(/:\w+/g, ""))
+  );
 
   return (
     <div className="min-h-screen bg-white">
@@ -59,6 +67,10 @@ export default function App() {
             <Route
               path="/forgot-password"
               element={<motion.div {...pageTransition}><ForgotPassword /></motion.div>}
+            />
+            <Route
+              path="/password-reset-confirm/:uid/:token"
+              element={<motion.div {...pageTransition}><ResetPassword /></motion.div>}
             />
             <Route
               path="/learn-more"
@@ -101,7 +113,7 @@ export default function App() {
               }
             />
 
-            {/* OPTIONAL RESOURCE PAGE (only if exists) */}
+            {/* OPTIONAL RESOURCE PAGE */}
             <Route
               path="/resources/:slug"
               element={

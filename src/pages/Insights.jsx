@@ -1,25 +1,14 @@
+// src/components/dashboard/Insights.jsx
 import React, { useEffect, useState } from "react";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-} from "recharts";
-
-const COLORS = ["#FF6A00", "#FFD6B8", "#F0F0F0", "#FFA86B", "#6C63FF", "#00C49F"];
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import PieChartCard from "./PieChartCard";
+import SmartInsights from "./SmartInsights";
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || "http://127.0.0.1:5000";
 
 export default function Insights() {
   const [expenses, setExpenses] = useState([]);
-  const [categoryData, setCategoryData] = useState([]);
+  const [categoryData, setCategoryData] = useState({ labels: [], datasets: [] });
   const [weeklyData, setWeeklyData] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -33,7 +22,7 @@ export default function Insights() {
     return token;
   };
 
-  /* ------------ FETCH EXPENSES FROM BACKEND ------------ */
+  /* ------------ FETCH EXPENSES ------------ */
   useEffect(() => {
     async function fetchExpenses() {
       const token = getTokenOrRedirect();
@@ -43,14 +32,12 @@ export default function Insights() {
         const res = await fetch(`${API_URL}/expenses`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-
         if (!res.ok) throw new Error("Failed to fetch expenses");
 
         const data = await res.json();
-
         setExpenses(data);
-        updateCategoryData(data);
-        updateWeeklyData(data);
+        prepareCategoryData(data);
+        prepareWeeklyData(data);
       } catch (err) {
         console.error(err);
       } finally {
@@ -61,49 +48,36 @@ export default function Insights() {
     fetchExpenses();
   }, []);
 
-  /* ------------ CATEGORY SENSING ------------ */
-  const updateCategoryData = (data) => {
-    const categoryMap = {};
+  /* ------------ CATEGORY DATA ------------ */
+  const prepareCategoryData = (data) => {
+    const categories = {};
     data.forEach((e) => {
       const cat = e.category || "Other";
-      categoryMap[cat] = (categoryMap[cat] || 0) + Number(e.amount || 0);
+      categories[cat] = (categories[cat] || 0) + Number(e.amount || 0);
     });
 
-    const total = Object.values(categoryMap).reduce((a, b) => a + b, 0) || 1;
-
-    const formatted = Object.entries(categoryMap).map(([name, raw]) => ({
-      name,
-      value: Number(raw.toFixed(2)),
-      percent: Number(((raw / total) * 100).toFixed(2)),
-    }));
-
-    setCategoryData(formatted);
+    setCategoryData({
+      labels: Object.keys(categories),
+      datasets: [{ data: Object.values(categories), backgroundColor: ["#FF6A00", "#FFD6B8", "#F0F0F0", "#FFA86B", "#6C63FF", "#00C49F"] }],
+    });
   };
 
-  /* ------------ WEEKLY TREND ------------ */
-  const updateWeeklyData = (data) => {
+  /* ------------ WEEKLY DATA ------------ */
+  const prepareWeeklyData = (data) => {
     const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     const today = new Date();
-
     const weekly = weekDays.map((d) => ({ day: d, spend: 0 }));
 
     data.forEach((e) => {
       if (!e.date) return;
-
-      const expenseDate = new Date(e.date);
-      const diffDays =
-        (today.getTime() - expenseDate.getTime()) / (1000 * 60 * 60 * 24);
-
-      if (diffDays < 7 && diffDays >= 0) {
-        const idx = expenseDate.getDay();
-        weekly[idx].spend += Number(e.amount || 0);
+      const d = new Date(e.date);
+      const diff = (today.getTime() - d.getTime()) / (1000 * 60 * 60 * 24);
+      if (diff >= 0 && diff < 7) {
+        weekly[d.getDay()].spend += Number(e.amount || 0);
       }
     });
 
-    weekly.forEach((d) => {
-      d.spend = Number(d.spend.toFixed(2));
-    });
-
+    weekly.forEach((d) => (d.spend = Number(d.spend.toFixed(2))));
     setWeeklyData(weekly);
   };
 
@@ -114,45 +88,19 @@ export default function Insights() {
       {loading && <div className="text-gray-600">Loading insights...</div>}
 
       {/* Category Pie Chart */}
-      <div className="bg-white rounded-xl shadow p-4">
-        <h2 className="font-semibold mb-2">Expenses by Category</h2>
-        {categoryData.length ? (
-          <ResponsiveContainer width="100%" height={350}>
-            <PieChart>
-              <Pie
-                data={categoryData}
-                dataKey="value"
-                nameKey="name"
-                outerRadius={80}
-                label={({ name, percent }) => `${name} ${percent}%`}
-              >
-                {categoryData.map((entry, index) => (
-                  <Cell key={index} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip formatter={(value) => `₹${value}`} />
-              <Legend verticalAlign="bottom" height={36} />
-            </PieChart>
-          </ResponsiveContainer>
-        ) : (
-          <div className="text-gray-500 text-sm">No expenses yet</div>
-        )}
-      </div>
+      <PieChartCard data={categoryData} />
 
       {/* Weekly Spending Bar Chart */}
       <div className="bg-white rounded-xl shadow p-4">
         <h2 className="font-semibold mb-2">Weekly Spending</h2>
         {weeklyData.length ? (
           <ResponsiveContainer width="100%" height={250}>
-            <BarChart
-              data={weeklyData}
-              margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
-            >
+            <BarChart data={weeklyData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="day" />
               <YAxis />
               <Tooltip formatter={(value) => `₹${value}`} />
-              <Bar dataKey="spend" fill={COLORS[0]} />
+              <Bar dataKey="spend" fill="#FF6A00" />
             </BarChart>
           </ResponsiveContainer>
         ) : (
@@ -160,33 +108,8 @@ export default function Insights() {
         )}
       </div>
 
-      {/* Summary Table */}
-      <div className="bg-white rounded-xl shadow p-4">
-        <h2 className="font-semibold mb-2">Category Summary</h2>
-
-        {categoryData.length ? (
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b">
-                <th className="py-1 px-2">Category</th>
-                <th className="py-1 px-2">Amount</th>
-                <th className="py-1 px-2">Percent</th>
-              </tr>
-            </thead>
-            <tbody>
-              {categoryData.map((c) => (
-                <tr key={c.name} className="border-b">
-                  <td className="py-1 px-2">{c.name}</td>
-                  <td className="py-1 px-2">₹{c.value}</td>
-                  <td className="py-1 px-2">{c.percent}%</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <div className="text-gray-500 text-sm">No expenses yet</div>
-        )}
-      </div>
+      {/* Smart Insights */}
+      <SmartInsights expenses={expenses} />
     </div>
   );
 }

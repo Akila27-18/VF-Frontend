@@ -1,26 +1,33 @@
+// src/components/ExpenseList.jsx
 import React, { useEffect, useState } from "react";
 import ExpenseCard from "../ExpenseCard";
 import axios from "axios";
 
 const categories = ["All", "Food", "Travel", "Shopping", "Bills", "Health", "Other"];
-const API_URL = import.meta.env.VITE_BACKEND_URL;
+const API_URL = import.meta.env.VITE_BACKEND_URL || "https://vf-backend-1.onrender.com";
 
 export default function ExpenseList() {
   const [list, setList] = useState([]);
   const [filter, setFilter] = useState("All");
 
+  const token = localStorage.getItem("token");
+
   const load = async () => {
+    if (!token) return window.location.href = "/login";
+
     try {
-      const res = await axios.get(`${API_URL}/expenses`);
+      const res = await axios.get(`${API_URL}/expenses/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setList(res.data);
     } catch (e) {
-      console.log("Expense load failed", e);
+      console.error("Expense load failed", e);
     }
   };
 
   useEffect(() => {
     load();
-    const interval = setInterval(load, 10000); // Auto refresh
+    const interval = setInterval(load, 10000); // Auto refresh every 10s
     return () => clearInterval(interval);
   }, []);
 
@@ -28,13 +35,25 @@ export default function ExpenseList() {
     filter === "All" ? list : list.filter((e) => e.category === filter);
 
   const handleEdit = async (exp) => {
-    await axios.put(`${API_URL}/expenses/${exp.id}`, exp);
-    load();
+    try {
+      await axios.put(`${API_URL}/expenses/${exp.id}/`, exp, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      load();
+    } catch (err) {
+      console.error("Edit failed", err);
+    }
   };
 
   const handleDelete = async (id) => {
-    await axios.delete(`${API_URL}/expenses/${id}`);
-    load();
+    try {
+      await axios.delete(`${API_URL}/expenses/${id}/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      load();
+    } catch (err) {
+      console.error("Delete failed", err);
+    }
   };
 
   return (

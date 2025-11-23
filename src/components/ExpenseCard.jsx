@@ -65,9 +65,9 @@ export default function ExpenseCard({ expense, onEdit, onDelete }) {
           </>
         ) : (
           <>
-            <button onClick={() => setIsEditing(true)} className="text-xl">✍️</button>
-            <button onClick={() => onDelete(expense.id)} className="text-xl">👉🏻🗑️</button>
-          </>
+        <button onClick={() => setIsEditing(true)} aria-label="Edit Expense">✍️</button>
+        <button onClick={() => onDelete(expense.id)} aria-label="Delete Expense">🗑️</button>
+                  </>
         )}
       </div>
     </div>

@@ -1,6 +1,8 @@
 // src/components/SplitBillModal.jsx
 import React, { useState, useEffect } from "react";
 
+const API_URL = "https://vf-backend-1.onrender.com";
+
 export default function SplitBillModal({ open, onClose, users = [], onAdd }) {
   const [title, setTitle] = useState("");
   const [total, setTotal] = useState("");
@@ -16,35 +18,60 @@ export default function SplitBillModal({ open, onClose, users = [], onAdd }) {
     }
   }, [open]);
 
+  const getToken = () => localStorage.getItem("token");
+
   const toggleUser = (user) => {
     setSelectedUsers((prev) =>
-      prev.includes(user)
-        ? prev.filter((u) => u !== user)
-        : [...prev, user]
+      prev.includes(user) ? prev.filter((u) => u !== user) : [...prev, user]
     );
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!title || !total || !selectedUsers.length || !paidBy) {
       return alert("Please fill all fields");
     }
 
     const amount = Number(total);
     const perPerson = amount / selectedUsers.length;
+    const token = getToken();
+    if (!token) return alert("Please login first");
 
-    const newExpenses = selectedUsers.map((user) => ({
-      id: `${Date.now()}_${user}`,
-      description: title,
-      amount: perPerson,
-      category: "Shared",
-      shared: true,
-      participants: selectedUsers,
-      paidBy,
-      date: new Date().toISOString().split("T")[0],
-    }));
+    try {
+      // Create individual expenses for each participant
+      const newExpenses = [];
+      for (const user of selectedUsers) {
+        if (user === paidBy) continue;
+        const payload = {
+          description: title,
+          amount: perPerson,
+          category: "Shared",
+          shared: true,
+          participants: selectedUsers,
+          paidBy,
+          date: new Date().toISOString().split("T")[0],
+        };
 
-    onAdd(newExpenses);
-    onClose();
+        const res = await fetch(`${API_URL}/expenses/`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) throw new Error("Failed to add shared expense");
+
+        const createdExpense = await res.json();
+        newExpenses.push(createdExpense);
+      }
+
+      onAdd(newExpenses); // Update frontend state
+      onClose();
+    } catch (err) {
+      console.error(err);
+      alert("Error splitting bill");
+    }
   };
 
   if (!open) return null;
@@ -100,13 +127,25 @@ export default function SplitBillModal({ open, onClose, users = [], onAdd }) {
           >
             <option value="">Select payer</option>
             {selectedUsers.map((user) => (
-              <option key={user} value={user}>{user}</option>
+              <option key={user} value={user}>
+                {user}
+              </option>
             ))}
           </select>
         </div>
         <div className="flex justify-end gap-2 mt-4">
-          <button onClick={onClose} className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300">Cancel</button>
-          <button onClick={handleSubmit} className="px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-600">Split</button>
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            className="px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-600"
+          >
+            Split
+          </button>
         </div>
       </div>
     </div>

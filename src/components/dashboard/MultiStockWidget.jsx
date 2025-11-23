@@ -1,4 +1,4 @@
-// frontend/src/components/dashboard/MultiStockWidget.jsx
+// src/components/dashboard/MultiStockWidget.jsx
 import { useEffect, useState, useRef } from "react";
 import { Sparklines, SparklinesLine } from "react-sparklines";
 
@@ -9,11 +9,11 @@ const LOGOS = {
   AAPL: "/logos/aapl.jpg",
   TSLA: "/logos/tsla.jpg",
   MSFT: "/logos/msft.jpg",
-  "RELIANCE.NS": "public/logos/reliance.jpg",
-  "TCS.NS": "public/logos/tcs.jpg",
-  "HDFCBANK.NS": "public/logos/hdfc.jpg",
-  "BTC-USD": "public/logos/btc.jpg",
-  "ETH-USD": "public/logos/eth.jpg",
+  "RELIANCE.NS": "/logos/reliance.jpg",
+  "TCS.NS": "/logos/tcs.jpg",
+  "HDFCBANK.NS": "/logos/hdfc.jpg",
+  "BTC-USD": "/logos/btc.jpg",
+  "ETH-USD": "/logos/eth.jpg",
 };
 
 // Map frontend symbols to backend-compatible symbols
@@ -24,6 +24,8 @@ const mapSymbol = (s) => {
   return s;
 };
 
+const API_URL = import.meta.env.VITE_BACKEND_URL || "https://vf-backend-1.onrender.com";
+
 function MultiStockWidget({ symbols }) {
   const [data, setData] = useState({});
   const [profitInput, setProfitInput] = useState({});
@@ -32,19 +34,17 @@ function MultiStockWidget({ symbols }) {
   const fetchStock = async (symbol) => {
     const backendSymbol = mapSymbol(symbol);
     try {
-      const res = await fetch(`http://localhost:5000/api/stock/${backendSymbol}`);
+      const res = await fetch(`${API_URL}/api/stock/${backendSymbol}`);
       const json = await res.json();
-      console.log("Stock fetched:", backendSymbol, json);
 
       if (!json) return null;
 
-      // Use backend mock structure
       return {
         symbol: backendSymbol,
         price: json.price,
         change: json.change,
         percent: json.percent,
-        spark: json.spark,
+        spark: json.spark || [],
       };
     } catch (err) {
       console.error("Failed to fetch stock", backendSymbol, err);
@@ -62,9 +62,9 @@ function MultiStockWidget({ symbols }) {
 
   useEffect(() => {
     loadAll();
-    const interval = setInterval(loadAll, 10000);
+    const interval = setInterval(loadAll, 10000); // refresh every 10s
     return () => clearInterval(interval);
-  }, []);
+  }, [symbols]);
 
   return (
     <div className="p-4 rounded-xl shadow bg-white text-orange-500">
@@ -79,7 +79,11 @@ function MultiStockWidget({ symbols }) {
 
           return (
             <div key={symbol} className="p-2 flex justify-between border-b last:border-none">
-              <img src={LOGOS[stock.symbol]} alt={symbol} className="w-10 h-10 rounded-full mr-3" />
+              <img
+                src={LOGOS[stock.symbol] || "/logos/default.jpg"}
+                alt={symbol}
+                className="w-10 h-10 rounded-full mr-3"
+              />
               <div className="flex-1">
                 <div className="font-semibold">{symbol}</div>
                 <div className="text-sm">
@@ -109,7 +113,10 @@ function MultiStockWidget({ symbols }) {
               </div>
               <div className="w-28 h-10">
                 <Sparklines data={stock.spark}>
-                  <SparklinesLine color={up ? "green" : "red"} style={{ fill: "none", strokeWidth: 2 }} />
+                  <SparklinesLine
+                    color={up ? "green" : "red"}
+                    style={{ fill: "none", strokeWidth: 2 }}
+                  />
                 </Sparklines>
               </div>
             </div>

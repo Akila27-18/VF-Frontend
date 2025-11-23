@@ -1,24 +1,25 @@
-// src/components/dashboard/SmartInsights.jsx
 import React, { useMemo } from "react";
 
-export default function SmartInsights({ expenses = [] }) {
+export default function SmartInsights({ expenses = [], largeExpenseThreshold = 0.4 }) {
   const insights = useMemo(() => {
-    if (!expenses || expenses.length === 0) return ["No expenses yet — add your first transaction."];
+    if (!expenses || expenses.length === 0) 
+      return ["No expenses yet — add your first transaction."];
 
-    // totals
     const now = new Date();
     const month = now.getMonth();
     const lastMonth = (month - 1 + 12) % 12;
 
-    let thisMonth = 0;
+    let thisMonthTotal = 0;
     let lastMonthTotal = 0;
     const byCategory = {};
 
     expenses.forEach((e) => {
       const amt = Number(e.amount || 0);
-      const d = e.date ? new Date(e.date) : new Date();
-      if (d.getMonth() === month) thisMonth += amt;
-      if (d.getMonth() === lastMonth) lastMonthTotal += amt;
+      const d = e.date ? new Date(e.date) : now;
+      if (!isNaN(d.getTime())) {
+        if (d.getMonth() === month) thisMonthTotal += amt;
+        if (d.getMonth() === lastMonth) lastMonthTotal += amt;
+      }
       const cat = e.category || "Other";
       byCategory[cat] = (byCategory[cat] || 0) + amt;
     });
@@ -28,34 +29,34 @@ export default function SmartInsights({ expenses = [] }) {
 
     const lines = [];
 
-    // month trend
-    const diff = thisMonth - lastMonthTotal;
+    // Monthly trend
+    const diff = thisMonthTotal - lastMonthTotal;
     if (Math.abs(diff) < 1) lines.push("Monthly spending is stable compared to last month.");
-    else if (diff > 0) lines.push(`Spending up ₹${diff.toFixed(2)} vs last month.`);
-    else lines.push(`Good — spending down ₹${Math.abs(diff).toFixed(2)} vs last month.`);
+    else if (diff > 0) lines.push(`Spending up ₹${diff.toLocaleString("en-IN", { minimumFractionDigits: 2 })} vs last month.`);
+    else lines.push(`Good — spending down ₹${Math.abs(diff).toLocaleString("en-IN", { minimumFractionDigits: 2 })} vs last month.`);
 
-    // top category
-    lines.push(`Top category: ${topCategory[0]} (₹${topCategory[1].toFixed(2)})`);
+    // Top category
+    lines.push(`Top category: ${topCategory[0]} (₹${topCategory[1].toLocaleString("en-IN", { minimumFractionDigits: 2 })})`);
 
-    // anomaly detection - any single expense > 40% of month
+    // Large expense detection
     const biggest = [...expenses].sort((a, b) => Number(b.amount || 0) - Number(a.amount || 0))[0];
-    if (biggest && thisMonth > 0 && Number(biggest.amount) > thisMonth * 0.4) {
-      lines.push(`⚠ Large one-time expense: ₹${Number(biggest.amount).toFixed(2)} (may skew this month's total).`);
+    if (biggest && thisMonthTotal > 0 && Number(biggest.amount) > thisMonthTotal * largeExpenseThreshold) {
+      lines.push(`⚠ Large one-time expense: ₹${Number(biggest.amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })} (may skew this month's total).`);
     }
 
-    // suggestions
-    lines.push("Suggestion: Set a weekly budget and review categories above to reduce overspend.");
-    lines.push("Tip: Click 'Split Bill' to split shared expenses.");
+    // Suggestions
+    lines.push("💡 Suggestion: Set a weekly budget and review categories above to reduce overspend.");
+    lines.push("💡 Tip: Click 'Split Bill' to split shared expenses.");
 
     return lines;
-  }, [expenses]);
+  }, [expenses, largeExpenseThreshold]);
 
   return (
     <div className="bg-white shadow rounded-xl p-4">
       <h3 className="text-lg font-semibold mb-3">Smart Insights</h3>
       <div className="space-y-2">
         {insights.map((t, i) => (
-          <div key={i} className="p-2 bg-gray-50 rounded text-sm text-gray-700">
+          <div key={i} className={`p-2 rounded text-sm ${t.startsWith("⚠") ? "bg-red-50 text-red-600" : "bg-gray-50 text-gray-700"}`}>
             {t}
           </div>
         ))}

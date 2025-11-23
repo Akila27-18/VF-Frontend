@@ -1,54 +1,82 @@
+// src/pages/Login.jsx
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import api from "../lib/api";
+import { useNavigate, Link } from "react-router-dom";
 
-export default function Signup() {
+const API_URL = import.meta.env.VITE_BACKEND_URL || "https://vf-backend-1.onrender.com";
+
+export default function Login() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: "", email: "", password: "" });
-  const [err, setErr] = useState("");
-  const [success, setSuccess] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const onSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setErr("");
-    setSuccess("");
+    setError("");
+    setLoading(true);
 
-    const res = await api.post("/auth/signup/", form);
-    if (!res.ok) return setErr(res.data.error || "Signup failed");
+    try {
+      const res = await fetch(`${API_URL}/login/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-    setSuccess("Account created! Redirecting to login...");
-    setTimeout(() => navigate("/login"), 1200);
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || "Login failed");
+
+      // Save token and user email
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("userEmail", email);
+
+      navigate("/dashboard"); // redirect to dashboard
+    } catch (err) {
+      console.error(err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <form onSubmit={onSubmit} className="bg-white p-6 rounded shadow w-full max-w-md">
-        <h2 className="text-xl font-semibold mb-4">Sign up</h2>
-        {err && <div className="text-red-600 mb-2">{err}</div>}
-        {success && <div className="text-green-600 mb-2">{success}</div>}
-        <input
-          placeholder="Full Name"
-          value={form.name}
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
-          className="w-full mb-2 border rounded px-3 py-2"
-        />
-        <input
-          placeholder="Email"
-          value={form.email}
-          onChange={(e) => setForm({ ...form, email: e.target.value })}
-          className="w-full mb-2 border rounded px-3 py-2"
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={form.password}
-          onChange={(e) => setForm({ ...form, password: e.target.value })}
-          className="w-full mb-2 border rounded px-3 py-2"
-        />
-        <button className="w-full bg-orange-500 text-white py-2 rounded hover:bg-orange-600">
-          Sign up
+    <div className="max-w-md mx-auto mt-20 p-6 bg-white rounded-xl shadow">
+      <h1 className="text-2xl font-bold mb-4">Login</h1>
+      {error && <div className="text-red-500 mb-3">{error}</div>}
+      <form className="space-y-3" onSubmit={handleSubmit}>
+        <div>
+          <label className="block text-sm font-medium mb-1">Email</label>
+          <input
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full border rounded px-3 py-2"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">Password</label>
+          <input
+            type="password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full border rounded px-3 py-2"
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-orange-500 text-white py-2 rounded hover:bg-orange-600"
+        >
+          {loading ? "Logging in..." : "Login"}
         </button>
       </form>
+      <div className="mt-4 text-sm flex justify-between">
+        <Link to="/signup" className="text-orange-500 hover:underline">Sign Up</Link>
+        <Link to="/password-reset" className="text-orange-500 hover:underline">Forgot Password?</Link>
+      </div>
     </div>
   );
 }

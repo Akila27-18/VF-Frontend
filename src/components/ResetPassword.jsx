@@ -1,37 +1,31 @@
-// src/pages/Login.jsx
+// src/pages/PasswordReset.jsx
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || "https://vf-backend-1.onrender.com";
 
-export default function Login() {
-  const navigate = useNavigate();
+export default function PasswordReset() {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setMessage("");
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_URL}/login/`, {
+      const res = await fetch(`${API_URL}/password-reset/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email }),
       });
 
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to reset password");
 
-      if (!res.ok) throw new Error(data.error || "Login failed");
-
-      // Save token and user email
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("userEmail", email);
-
-      navigate("/dashboard"); // redirect to dashboard
+      setMessage("Temporary password sent to your email.");
     } catch (err) {
       console.error(err);
       setError(err.message);
@@ -42,8 +36,11 @@ export default function Login() {
 
   return (
     <div className="max-w-md mx-auto mt-20 p-6 bg-white rounded-xl shadow">
-      <h1 className="text-2xl font-bold mb-4">Login</h1>
+      <h1 className="text-2xl font-bold mb-4">Password Reset</h1>
+
+      {message && <div className="text-green-500 mb-3">{message}</div>}
       {error && <div className="text-red-500 mb-3">{error}</div>}
+
       <form className="space-y-3" onSubmit={handleSubmit}>
         <div>
           <label className="block text-sm font-medium mb-1">Email</label>
@@ -55,28 +52,15 @@ export default function Login() {
             className="w-full border rounded px-3 py-2"
           />
         </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Password</label>
-          <input
-            type="password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full border rounded px-3 py-2"
-          />
-        </div>
+
         <button
           type="submit"
           disabled={loading}
           className="w-full bg-orange-500 text-white py-2 rounded hover:bg-orange-600"
         >
-          {loading ? "Logging in..." : "Login"}
+          {loading ? "Sending..." : "Send Temporary Password"}
         </button>
       </form>
-      <div className="mt-4 text-sm flex justify-between">
-        <Link to="/signup" className="text-orange-500 hover:underline">Sign Up</Link>
-        <Link to="/password-reset" className="text-orange-500 hover:underline">Forgot Password?</Link>
-      </div>
     </div>
   );
 }

@@ -18,13 +18,11 @@ export default function ChatPanel({ wsUrl, user = "You" }) {
   // -----------------------------
   const loadOlderMessages = async () => {
     if (loadingOlder || messages.length === 0) return;
-
     setLoadingOlder(true);
 
     const oldest = messages[0]?.createdAt || new Date().toISOString();
 
     try {
-      // FIXED URL → correct message API
       const res = await axios.get(
         `${import.meta.env.VITE_BACKEND_URL}/api/messages?before=${oldest}&limit=20`
       );
@@ -59,9 +57,7 @@ export default function ChatPanel({ wsUrl, user = "You" }) {
       // Incoming chat message
       if (msg.type === "chat" && msg.payload?.id) {
         setMessages((prev) =>
-          prev.some((m) => m.id === msg.payload.id)
-            ? prev
-            : [...prev, msg.payload]
+          prev.some((m) => m.id === msg.payload.id) ? prev : [...prev, msg.payload]
         );
       }
 
@@ -70,12 +66,9 @@ export default function ChatPanel({ wsUrl, user = "You" }) {
         const from = msg.payload?.from;
         if (!from || from === user) return;
 
-        setTypingUsers((prev) =>
-          prev.includes(from) ? prev : [...prev, from]
-        );
+        setTypingUsers((prev) => (prev.includes(from) ? prev : [...prev, from]));
 
-        if (typingTimeouts.current[from])
-          clearTimeout(typingTimeouts.current[from]);
+        if (typingTimeouts.current[from]) clearTimeout(typingTimeouts.current[from]);
 
         typingTimeouts.current[from] = setTimeout(() => {
           setTypingUsers((prev) => prev.filter((x) => x !== from));
@@ -96,10 +89,7 @@ export default function ChatPanel({ wsUrl, user = "You" }) {
   // Send typing event
   // -----------------------------
   const sendTyping = () => {
-    sendMessage({
-      type: "typing",
-      payload: { from: user },
-    });
+    sendMessage({ type: "typing", payload: { from: user } });
   };
 
   // -----------------------------
@@ -115,13 +105,12 @@ export default function ChatPanel({ wsUrl, user = "You" }) {
         id: Date.now().toString(),
         from: user,
         text: trimmed,
-        time: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
+        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       },
     };
 
+    // Optimistic UI
+    setMessages((prev) => [...prev, msg.payload]);
     sendMessage(msg);
     setText("");
   };
@@ -131,34 +120,22 @@ export default function ChatPanel({ wsUrl, user = "You" }) {
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="font-medium">Partner Chat</div>
-
-        <div
-          className={`text-xs ${
-            connected ? "text-green-600" : "text-red-500"
-          }`}
-        >
+        <div className={`text-xs ${connected ? "text-green-600" : "text-red-500"}`}>
           {connected ? "Live" : "Offline"}
         </div>
       </div>
 
       {/* Messages */}
-      <div
-        ref={scroller}
-        className="h-60 overflow-y-auto space-y-3 mb-3 pr-1"
-      >
+      <div ref={scroller} className="h-60 overflow-y-auto space-y-3 mb-3 pr-1">
         {loadingOlder && (
-          <div className="text-center text-xs text-gray-500">
-            Loading older messages…
-          </div>
+          <div className="text-center text-xs text-gray-500">Loading older messages…</div>
         )}
 
         {messages.map((m) => (
           <div
             key={m.id}
             className={`max-w-[85%] p-2 rounded-lg ${
-              m.from === user
-                ? "ml-auto bg-[#FF6A00] text-white"
-                : "mr-auto bg-gray-100 text-gray-900"
+              m.from === user ? "ml-auto bg-[#FF6A00] text-white" : "mr-auto bg-gray-100 text-gray-900"
             }`}
           >
             <div className="text-sm break-words">{m.text}</div>
@@ -170,8 +147,7 @@ export default function ChatPanel({ wsUrl, user = "You" }) {
 
         {typingUsers.length > 0 && (
           <div className="mr-auto bg-gray-200 text-gray-600 px-3 py-1 rounded-lg inline-block text-sm animate-pulse">
-            {typingUsers.join(", ")}{" "}
-            {typingUsers.length === 1 ? "is" : "are"} typing…
+            {typingUsers.join(", ")} {typingUsers.length === 1 ? "is" : "are"} typing…
           </div>
         )}
       </div>
@@ -193,7 +169,6 @@ export default function ChatPanel({ wsUrl, user = "You" }) {
           placeholder="Type a message..."
           className="flex-1 border rounded px-3 py-2"
         />
-
         <button
           onClick={handleSend}
           className="px-3 py-2 bg-[#FF6A00] text-white rounded hover:bg-orange-600"
