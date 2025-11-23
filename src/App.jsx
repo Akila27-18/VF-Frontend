@@ -11,10 +11,11 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Landing from "./components/Landing";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
-import ForgotPassword from "./pages/ForgotPassword";
+import ForgotPassword from "./components/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import LearnMore from "./components/LearnMore";
 import GetStarted from "./components/GetStarted";
+
 
 /* Protected Pages */
 import Insights from "./pages/Insights";
