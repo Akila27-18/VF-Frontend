@@ -1,12 +1,14 @@
+// src/pages/Login.jsx
 import React, { useState, useContext } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || "https://vf-backend-1.onrender.com";
 
 export default function Login() {
-  const { login } = useContext(AuthContext);
   const navigate = useNavigate();
+  const { login } = useContext(AuthContext);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -26,16 +28,25 @@ export default function Login() {
 
       const contentType = res.headers.get("content-type");
       let data;
-      if (contentType?.includes("application/json")) data = await res.json();
-      else throw new Error("Unexpected server response");
 
-      if (!res.ok) throw new Error(data.error || "Login failed");
+      if (contentType?.includes("application/json")) {
+        data = await res.json();
+      } else {
+        throw new Error("Unexpected server response");
+      }
 
-      login(data.token); // store token via context
+      if (!res.ok) {
+        throw new Error(data.error || "Login failed");
+      }
+
+      // Save token and login
+      localStorage.setItem("token", data.token);
       localStorage.setItem("userEmail", email);
+      login(data.token);
 
       navigate("/dashboard");
     } catch (err) {
+      console.error(err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -75,10 +86,6 @@ export default function Login() {
           {loading ? "Logging in..." : "Login"}
         </button>
       </form>
-      <div className="mt-4 text-sm flex justify-between">
-        <Link to="/signup" className="text-orange-500 hover:underline">Sign Up</Link>
-        <Link to="/password-reset" className="text-orange-500 hover:underline">Forgot Password?</Link>
-      </div>
     </div>
   );
 }
