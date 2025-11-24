@@ -11,9 +11,7 @@ export default function SplitBillModal({ open, onClose, users = [], onAdd }) {
 
   const handleUserToggle = (user) => {
     setSelectedUsers((prev) =>
-      prev.includes(user)
-        ? prev.filter((u) => u !== user)
-        : [...prev, user]
+      prev.includes(user) ? prev.filter((u) => u !== user) : [...prev, user]
     );
   };
 
@@ -30,14 +28,13 @@ export default function SplitBillModal({ open, onClose, users = [], onAdd }) {
     try {
       const splitAmount = Number(amount) / selectedUsers.length;
       const newExpenses = await Promise.all(
-        selectedUsers.map((user) =>
+        selectedUsers.map(() =>
           apiFetch("/expenses/", {
             method: "POST",
             body: JSON.stringify({
-              title: `${title} (${user})`,
+              title,
               amount: splitAmount,
               category: "Split Bill",
-              userId: user,
             }),
           })
         )

@@ -1,13 +1,18 @@
 // src/lib/api.js
-const API_URL = import.meta.env.VITE_BACKEND_URL;
+const raw = import.meta.env.VITE_BACKEND_URL || "https://vf-backend-1.onrender.com";
+export const API_URL = raw.replace(/\/$/, ""); // no trailing slash
 
 export async function apiFetch(endpoint, options = {}) {
-  // Always use access token for API requests
   const accessToken = localStorage.getItem("accessToken");
+
+  // endpoints that should NOT include Authorization header
+  const noAuthEndpoints = ["/auth/login/", "/auth/signup/", "/auth/refresh/", "/auth/password-reset/"];
+
+  const isNoAuth = noAuthEndpoints.some((p) => endpoint.startsWith(p));
 
   const headers = {
     "Content-Type": "application/json",
-    ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+    ...(accessToken && !isNoAuth ? { Authorization: `Bearer ${accessToken}` } : {}),
     ...(options.headers || {}),
   };
 
@@ -25,7 +30,7 @@ export async function apiFetch(endpoint, options = {}) {
   }
 
   if (!res.ok) {
-    const err = data?.detail || data?.error || res.statusText || "API request failed";
+    const err = data?.detail || data?.error || data?.message || res.statusText || "API request failed";
     throw new Error(err);
   }
 

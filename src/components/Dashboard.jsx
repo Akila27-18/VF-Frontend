@@ -1,17 +1,17 @@
+// src/pages/Dashboard.jsx
 import React, { useEffect, useState, useMemo, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 
 /* Components */
-import DashboardHeader from "./dashboard/DashboardHeader";
-import QuickActions from "./dashboard/QuickActions";
-import ExpenseCard from "./ExpenseCard";
-import AddExpenseModal from "./AddExpenseModal";
-import SplitBillModal from "./SplitBillModal";
-import SafeAside from "./SafeAside";
-import SummaryCard from "./dashboard/SummaryCard";
-import SmartInsights from "./dashboard/SmartInsights";
-import PieChartCard from "./dashboard/PieChartCard";
-import { PieChart } from "lucide-react";
+import DashboardHeader from "../components/dashboard/DashboardHeader";
+import QuickActions from "../components/dashboard/QuickActions";
+import ExpenseCard from "../components/ExpenseCard";
+import AddExpenseModal from "../components/AddExpenseModal";
+import SplitBillModal from "../components/SplitBillModal";
+import SafeAside from "../components/SafeAside";
+import SummaryCard from "../components/dashboard/SummaryCard";
+import SmartInsights from "../components/dashboard/SmartInsights";
+import PieChartCard from "../components/dashboard/PieChartCard";
 
 
 /* Images */
@@ -33,30 +33,26 @@ export default function Dashboard() {
   const [filteredCategory, setFilteredCategory] = useState("All");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [showAdd, setShowAdd] = useState(false);
   const [showSplit, setShowSplit] = useState(false);
 
   const dashboardUsers = ["Alice", "Bob", "Charlie"];
 
-  // Fetch expenses on mount
+  // Fetch expenses
   useEffect(() => {
     if (!token) return;
-
     const fetchExpenses = async () => {
       try {
-        const data = await apiFetch("/expenses/"); // token is sent inside apiFetch
+        const data = await apiFetch("/expenses/");
         setExpenses(data);
         localStorage.setItem("expenses", JSON.stringify(data));
       } catch (err) {
         console.error(err);
-        setError(err.message);
         if (err.message.toLowerCase().includes("token")) logout();
       } finally {
         setLoading(false);
       }
     };
-
     fetchExpenses();
   }, [token]);
 
@@ -72,7 +68,7 @@ export default function Dashboard() {
       list = list.filter((e) => (e.category || "Other") === filteredCategory);
     if (q)
       list = list.filter(
-        (e) => (e.description || e.title || "").toLowerCase().includes(q)
+        (e) => (e.title || "").toLowerCase().includes(q)
       );
     return list;
   }, [expenses, filteredCategory, search]);
@@ -89,7 +85,8 @@ export default function Dashboard() {
         {
           data: Object.values(totals),
           backgroundColor: [
-            "#FF6A00", "#FF7F26", "#FF934D", "#FFA873", "#FFBD99", "#FFD2BF",
+            "#FF6A00", "#FF7F26", "#FF934D", "#FFA873",
+            "#FFBD99", "#FFD2BF"
           ].slice(0, Object.keys(totals).length),
         },
       ],
@@ -101,7 +98,6 @@ export default function Dashboard() {
     localStorage.setItem("expenses", JSON.stringify(data));
   };
 
-  // Add expense with token
   const handleAddExpense = async (expense) => {
     try {
       const res = await apiFetch("/expenses/", {
@@ -112,16 +108,6 @@ export default function Dashboard() {
       setShowAdd(false);
     } catch (err) {
       alert("Error adding expense: " + err.message);
-      if (err.message.toLowerCase().includes("token")) logout();
-    }
-  };
-
-  const handleDeleteExpense = async (id) => {
-    try {
-      await apiFetch(`/expenses/${id}/`, { method: "DELETE" });
-      saveExpensesLocal(expenses.filter((e) => e.id !== id));
-    } catch (err) {
-      alert("Error deleting expense: " + err.message);
       if (err.message.toLowerCase().includes("token")) logout();
     }
   };
@@ -183,7 +169,6 @@ export default function Dashboard() {
               onEdit={(updated) =>
                 saveExpensesLocal(expenses.map((ex) => (ex.id === updated.id ? updated : ex)))
               }
-              onDelete={handleDeleteExpense}
             />
           ))}
           <PieChartCard data={pieData} />

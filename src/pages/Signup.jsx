@@ -10,29 +10,29 @@ export default function Signup() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
     setLoading(true);
 
     try {
-      // Create user
-      await apiFetch("/auth/signup/", {
-        method: "POST",
-        body: JSON.stringify({ email, password, name }),
-      });
-
-      // Automatically login after signup
-      const data = await apiFetch("/auth/login/", {
+      const data = await apiFetch("/auth/signup/", {
         method: "POST",
         body: JSON.stringify({ email, password }),
       });
 
-      login(data.access, data.refresh);
+      // backend returns { access, refresh, email }
+      login(data.access, data.refresh, { email: data.email || email });
       navigate("/dashboard");
     } catch (err) {
       setError(err.message);
@@ -43,43 +43,18 @@ export default function Signup() {
 
   return (
     <div className="max-w-md mx-auto mt-20 p-6 bg-white rounded-xl shadow">
-      <h1 className="text-2xl font-bold mb-4">Sign Up</h1>
+      <h1 className="text-2xl font-bold mb-4">Create Account</h1>
       {error && <div className="text-red-500 mb-3">{error}</div>}
       <form className="space-y-3" onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-        />
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <button
-          type="submit"
-          className="w-full bg-orange-500 text-white py-2 rounded hover:bg-orange-600"
-          disabled={loading}
-        >
-          {loading ? "Signing up..." : "Sign Up"}
+        <input className="w-full border p-2 rounded" type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        <input className="w-full border p-2 rounded" type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+        <input className="w-full border p-2 rounded" type="password" placeholder="Confirm Password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
+        <button className="w-full bg-orange-500 text-white py-2 rounded" type="submit" disabled={loading}>
+          {loading ? "Creating..." : "Sign Up"}
         </button>
       </form>
-      <div className="mt-4 text-sm">
-        Already have an account?{" "}
-        <Link to="/login" className="text-orange-500 hover:underline">
-          Login
-        </Link>
+      <div className="mt-4 text-center">
+        <Link to="/login" className="text-orange-500 hover:underline">Already have an account? Log in</Link>
       </div>
     </div>
   );

@@ -15,13 +15,11 @@ export default function AddExpenseModal({ open, onClose, onAdd }) {
     setError("");
 
     try {
-      if (!title || !amount) {
-        throw new Error("Title and Amount are required");
-      }
+      if (!title || !amount) throw new Error("Title and Amount are required");
 
       const payload = {
         title,
-        amount: Number(amount), // ensure it's a number
+        amount: Number(amount),
         category: category || "Other",
       };
 
@@ -32,7 +30,7 @@ export default function AddExpenseModal({ open, onClose, onAdd }) {
 
       onAdd(newExpense);
 
-      // reset form
+      // Reset form
       setTitle("");
       setAmount("");
       setCategory("");

@@ -9,10 +9,10 @@ export default function PieChart({ expenses }) {
 
   const categories = {};
 
-  // Group by category
+  // Group expenses by category
   expenses.forEach((e) => {
     const category = e.category || "Other";
-    categories[category] = (categories[category] || 0) + e.amount;
+    categories[category] = (categories[category] || 0) + Number(e.amount || 0);
   });
 
   const data = {
@@ -20,6 +20,16 @@ export default function PieChart({ expenses }) {
     datasets: [
       {
         data: Object.values(categories),
+        backgroundColor: [
+          "#FF6A00",
+          "#FFD6B8",
+          "#6C63FF",
+          "#00C49F",
+          "#FFB700",
+          "#FF3D71",
+          "#28C2FF",
+        ],
+        borderWidth: 1,
       },
     ],
   };

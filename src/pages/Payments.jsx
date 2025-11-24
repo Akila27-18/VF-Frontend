@@ -1,98 +1,74 @@
-// src/pages/Payments.jsx
-import React, { useEffect, useState } from "react";
-
-const API_URL = "https://vf-backend-1.onrender.com";
+import React, { useEffect, useState, useContext } from "react";
+import { apiFetch } from "../lib/api";
+import { AuthContext } from "../context/AuthContext";
 
 export default function Payments() {
-  const [payments, setPayments] = useState([]);
-  const [settledPayments, setSettledPayments] = useState([]);
+  const { token, logout } = useContext(AuthContext);
+  const [sharedBudgets, setSharedBudgets] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const getToken = () => localStorage.getItem("token");
-
+  // Fetch shared budgets on mount
   useEffect(() => {
-    const fetchExpenses = async () => {
-      const token = getToken();
-      if (!token) return window.location.href = "/login";
+    if (!token) return;
 
+    const fetchBudgets = async () => {
       try {
-        const res = await fetch(`${API_URL}/expenses/`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) throw new Error("Failed to fetch expenses");
-
-        const data = await res.json();
-
-        // Build payment items for shared expenses
-        const items = data.flatMap((e, idx) => {
-          if (!e.shared || !e.participants || !e.paidBy) return [];
-          const share = Number(e.amount);
-          return e.participants
-            .filter((p) => p !== e.paidBy)
-            .map((p) => ({
-              id: `${e.id}_${p}`, // unique ID per participant
-              description: e.description,
-              from: p,
-              to: e.paidBy,
-              amount: parseFloat(share.toFixed(2)),
-            }));
-        });
-
-        setPayments(items);
-
-        // Load settled payments from localStorage
-        const savedSettled = localStorage.getItem("settledPayments");
-        if (savedSettled) setSettledPayments(JSON.parse(savedSettled));
+        const data = await apiFetch("/budgets/");
+        setSharedBudgets(data);
       } catch (err) {
         console.error(err);
-        alert("Error fetching expenses");
+        setError(err.message);
+        if (err.message.toLowerCase().includes("token")) logout();
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchExpenses();
-  }, []);
+    fetchBudgets();
+  }, [token]);
 
-  const markSettled = (id) => {
-    const updated = [...settledPayments, id];
-    setSettledPayments(updated);
-    localStorage.setItem("settledPayments", JSON.stringify(updated));
+  // Calculate who owes whom
+  const calculateOwed = (budget) => {
+    if (!budget.participants || budget.participants.length === 0) return [];
+
+    const splitAmount = budget.total_amount / budget.participants.length;
+    return budget.participants.map((p) => ({
+      participant: p,
+      owes: splitAmount.toFixed(2),
+    }));
   };
 
-  return (
-    <div className="space-y-6 px-4 md:px-8">
-      <h1 className="text-2xl font-bold">Payments</h1>
+  if (loading) return <div className="text-center py-6">Loading shared budgets...</div>;
+  if (error) return <div className="text-red-600 py-6 text-center">{error}</div>;
+  if (sharedBudgets.length === 0)
+    return <div className="p-4 bg-orange-200 rounded shadow text-center">No shared budgets found</div>;
 
-      {payments.length ? (
-        <div className="grid md:grid-cols-2 gap-4">
-          {payments.map((p) => {
-            const isSettled = settledPayments.includes(p.id);
-            return (
-              <div
-                key={p.id}
-                className="bg-white rounded-xl shadow p-4 flex items-center justify-between"
-              >
-                <div>
-                  <div className="font-medium">{p.from} → {p.to}</div>
-                  <div className="text-sm text-gray-500">{isSettled ? "Settled" : "Pending"}</div>
-                  <div className="text-xs text-gray-400">{p.description}</div>
+  return (
+    <div className="px-4 md:px-8 space-y-6 min-h-screen bg-orange-50">
+      <h2 className="text-2xl font-semibold mb-4">Shared Payments</h2>
+
+      <div className="grid gap-6">
+        {sharedBudgets.map((budget) => (
+          <div key={budget.id} className="bg-white rounded-xl shadow p-4">
+            <h3 className="font-semibold text-lg">{budget.name}</h3>
+            <p className="text-gray-600 mb-2">
+              Total: ₹{Number(budget.total_amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+            </p>
+            <div className="divide-y">
+              {calculateOwed(budget).map((p, idx) => (
+                <div
+                  key={idx}
+                  className="flex justify-between items-center py-2 text-gray-700"
+                >
+                  <span>{p.participant.username}</span>
+                  <span className="font-semibold">₹{p.owes}</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="font-semibold">₹{p.amount.toFixed(0)}</div>
-                  {!isSettled && (
-                    <button
-                      className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 text-sm"
-                      onClick={() => markSettled(p.id)}
-                    >
-                      Mark Paid
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="text-gray-500 text-sm">No payments required</div>
-      )}
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

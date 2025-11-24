@@ -1,11 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
-import { apiFetch } from "../lib/api";
- // or your existing api hook/context
+import { apiFetch } from "../lib/api"; 
 
 export default function NewsFeed() {
-  const api = useApi();
   const [news, setNews] = useState([]);
-  const [visibleCount, setVisibleCount] = useState(2); // show first 2 initially
+  const [visibleCount, setVisibleCount] = useState(2);
   const [error, setError] = useState("");
 
   const loaderRef = useRef(null);
@@ -13,9 +11,14 @@ export default function NewsFeed() {
   useEffect(() => {
     const fetchNews = async () => {
       try {
-        const res = await api.get("/news/");
-        if (!res.ok) throw new Error(res.data?.error || "Failed to fetch news");
-        setNews(res.data.slice(0, 20)); // load 20 but display first few
+        // apiFetch returns raw JSON
+        const data = await apiFetch("/news/");
+
+        if (!Array.isArray(data)) {
+          throw new Error("Invalid news API response");
+        }
+
+        setNews(data.slice(0, 20)); // load up to 20
       } catch (err) {
         console.error(err);
         setError(err.message || "Failed to load news");
@@ -25,12 +28,12 @@ export default function NewsFeed() {
     fetchNews();
   }, []);
 
-  // Infinite scroll to show more news
+  // Infinite scroll: reveal 2 more items
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
-          setVisibleCount((prev) => prev + 2); // show 2 more items
+          setVisibleCount((prev) => prev + 2);
         }
       },
       { threshold: 1 }
@@ -42,11 +45,13 @@ export default function NewsFeed() {
 
   return (
     <div className="bg-white rounded-xl shadow p-4 overflow-auto max-h-96">
-      <h2 className="font-semibold text-orange-700 text-lg mb-3">Live Financial News</h2>
+      <h2 className="font-semibold text-orange-700 text-lg mb-3">
+        Live Financial News
+      </h2>
 
       {error && <div className="text-red-500 text-sm mb-2">{error}</div>}
 
-      {news.length === 0 && !error && (
+      {!error && news.length === 0 && (
         <div className="text-gray-500 text-sm">Loading news...</div>
       )}
 
@@ -68,7 +73,7 @@ export default function NewsFeed() {
         ))}
       </ul>
 
-      {/* invisible trigger for infinite scroll */}
+      {/* invisible infinite-scroll trigger */}
       <div ref={loaderRef} className="h-6"></div>
     </div>
   );

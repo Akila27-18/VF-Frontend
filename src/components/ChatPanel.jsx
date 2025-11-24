@@ -24,10 +24,15 @@ export default function ChatPanel({ wsUrl, user = "You" }) {
 
     try {
       const res = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/messages?before=${oldest}&limit=20`
+        `${import.meta.env.VITE_BACKEND_URL}/api/messages`,
+        {
+          params: { before: oldest, limit: 20 }
+        }
       );
 
-      setMessages((prev) => [...res.data, ...prev]);
+      if (Array.isArray(res.data)) {
+        setMessages((prev) => [...res.data, ...prev]);
+      }
     } catch (err) {
       console.error("Load older messages failed:", err);
     } finally {
@@ -35,14 +40,17 @@ export default function ChatPanel({ wsUrl, user = "You" }) {
     }
   };
 
-  // Scroll listener for infinite scroll
+  // Scroll listener
   const handleScroll = () => {
-    if (scroller.current.scrollTop < 40) loadOlderMessages();
+    if (scroller.current?.scrollTop < 40) {
+      loadOlderMessages();
+    }
   };
 
   useEffect(() => {
     const s = scroller.current;
     if (!s) return;
+
     s.addEventListener("scroll", handleScroll);
     return () => s.removeEventListener("scroll", handleScroll);
   }, [messages]);
@@ -51,13 +59,17 @@ export default function ChatPanel({ wsUrl, user = "You" }) {
   // Handle incoming WebSocket messages
   // -----------------------------
   useEffect(() => {
-    rawMessages.forEach((msg) => {
-      if (!msg) return;
+    if (!rawMessages || rawMessages.length === 0) return;
 
-      // Incoming chat message
+    rawMessages.forEach((msg) => {
+      if (!msg || !msg.type) return;
+
+      // Chat message
       if (msg.type === "chat" && msg.payload?.id) {
         setMessages((prev) =>
-          prev.some((m) => m.id === msg.payload.id) ? prev : [...prev, msg.payload]
+          prev.some((m) => m.id === msg.payload.id)
+            ? prev
+            : [...prev, msg.payload]
         );
       }
 
@@ -66,30 +78,44 @@ export default function ChatPanel({ wsUrl, user = "You" }) {
         const from = msg.payload?.from;
         if (!from || from === user) return;
 
-        setTypingUsers((prev) => (prev.includes(from) ? prev : [...prev, from]));
+        setTypingUsers((prev) =>
+          prev.includes(from) ? prev : [...prev, from]
+        );
 
-        if (typingTimeouts.current[from]) clearTimeout(typingTimeouts.current[from]);
+        if (typingTimeouts.current[from]) {
+          clearTimeout(typingTimeouts.current[from]);
+        }
 
         typingTimeouts.current[from] = setTimeout(() => {
           setTypingUsers((prev) => prev.filter((x) => x !== from));
-        }, 1800);
+        }, 1600);
       }
     });
   }, [rawMessages, user]);
 
-  // Auto-scroll to bottom
+  // -----------------------------
+  // Auto-scroll on new messages
+  // -----------------------------
   useEffect(() => {
     if (!scroller.current) return;
+
     requestAnimationFrame(() => {
       scroller.current.scrollTop = scroller.current.scrollHeight;
     });
   }, [messages, typingUsers]);
 
   // -----------------------------
-  // Send typing event
+  // Send typing event (debounced)
   // -----------------------------
+  const typingTimeout = useRef(null);
   const sendTyping = () => {
+    if (typingTimeout.current) return; // prevent spamming
+
     sendMessage({ type: "typing", payload: { from: user } });
+
+    typingTimeout.current = setTimeout(() => {
+      typingTimeout.current = null;
+    }, 800);
   };
 
   // -----------------------------
@@ -105,11 +131,14 @@ export default function ChatPanel({ wsUrl, user = "You" }) {
         id: Date.now().toString(),
         from: user,
         text: trimmed,
-        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        time: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
       },
     };
 
-    // Optimistic UI
+    // Optimistic update
     setMessages((prev) => [...prev, msg.payload]);
     sendMessage(msg);
     setText("");
@@ -128,14 +157,18 @@ export default function ChatPanel({ wsUrl, user = "You" }) {
       {/* Messages */}
       <div ref={scroller} className="h-60 overflow-y-auto space-y-3 mb-3 pr-1">
         {loadingOlder && (
-          <div className="text-center text-xs text-gray-500">Loading older messages…</div>
+          <div className="text-center text-xs text-gray-500">
+            Loading older messages…
+          </div>
         )}
 
         {messages.map((m) => (
           <div
             key={m.id}
             className={`max-w-[85%] p-2 rounded-lg ${
-              m.from === user ? "ml-auto bg-[#FF6A00] text-white" : "mr-auto bg-gray-100 text-gray-900"
+              m.from === user
+                ? "ml-auto bg-[#FF6A00] text-white"
+                : "mr-auto bg-gray-100 text-gray-900"
             }`}
           >
             <div className="text-sm break-words">{m.text}</div>
@@ -158,14 +191,9 @@ export default function ChatPanel({ wsUrl, user = "You" }) {
           value={text}
           onChange={(e) => {
             setText(e.target.value);
-            sendTyping();
+            sendTyping(); // debounced typing
           }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              handleSend();
-            }
-          }}
+          onKeyDown={(e) => e.key === "Enter" && handleSend()}
           placeholder="Type a message..."
           className="flex-1 border rounded px-3 py-2"
         />

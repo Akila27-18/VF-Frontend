@@ -1,8 +1,7 @@
-// src/components/dashboard/MultiStockWidget.jsx
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Sparklines, SparklinesLine } from "react-sparklines";
 
-// Stock logos (public folder /public/logos/)
+// Stock logos
 const LOGOS = {
   GOOGL: "/logos/google.jpg",
   AMZN: "/logos/amzn.jpg",
@@ -26,13 +25,13 @@ const mapSymbol = (s) => {
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || "https://vf-backend-1.onrender.com";
 
-function MultiStockWidget({ symbols }) {
-  const [data, setData] = useState({});
+export default function MultiStockWidget({ symbols }) {
+  const [stocks, setStocks] = useState({});
   const [profitInput, setProfitInput] = useState({});
-  const containerRef = useRef(null);
 
   const fetchStock = async (symbol) => {
     const backendSymbol = mapSymbol(symbol);
+
     try {
       const res = await fetch(`${API_URL}/api/stock/${backendSymbol}`);
       const json = await res.json();
@@ -40,67 +39,96 @@ function MultiStockWidget({ symbols }) {
       if (!json) return null;
 
       return {
-        symbol: backendSymbol,
-        price: json.price,
-        change: json.change,
-        percent: json.percent,
-        spark: json.spark || [],
+        uiSymbol: symbol,           // frontend label
+        backendSymbol: backendSymbol,
+        price: Number(json.price ?? 0),
+        change: Number(json.change ?? 0),
+        percent: Number(json.percent ?? 0),
+        spark: Array.isArray(json.spark) ? json.spark : [],
       };
     } catch (err) {
-      console.error("Failed to fetch stock", backendSymbol, err);
+      console.error("Failed to fetch stock:", backendSymbol, err);
       return null;
     }
   };
 
   const loadAll = async () => {
-    const output = {};
-    for (const s of symbols) {
-      output[s] = await fetchStock(s);
-    }
-    setData(output);
+    const results = await Promise.all(symbols.map((s) => fetchStock(s)));
+    const mapped = {};
+
+    symbols.forEach((s, i) => {
+      mapped[s] = results[i];
+    });
+
+    setStocks(mapped);
   };
 
   useEffect(() => {
+    // Stable effect: JSON.stringify avoids unnecessary refetch
     loadAll();
-    const interval = setInterval(loadAll, 10000); // refresh every 10s
+    const interval = setInterval(loadAll, 10000);
     return () => clearInterval(interval);
-  }, [symbols]);
+  }, [JSON.stringify(symbols)]);
 
   return (
     <div className="p-4 rounded-xl shadow bg-white text-orange-500">
       <h2 className="font-bold text-lg mb-3">📈 Live Market Updates</h2>
 
-      <div ref={containerRef} className="overflow-y-auto max-h-[250px]">
+      <div className="overflow-y-auto max-h-[250px]">
         {symbols.map((symbol) => {
-          const stock = data[symbol];
-          if (!stock) return <div key={symbol}>Loading {symbol}...</div>;
+          const stock = stocks[symbol];
+
+          if (!stock) {
+            return (
+              <div key={symbol} className="py-2 text-gray-500">
+                Loading {symbol}...
+              </div>
+            );
+          }
 
           const up = stock.change > 0;
+          const logo =
+            LOGOS[stock.backendSymbol] ||
+            LOGOS[stock.uiSymbol] ||
+            "/logos/default.jpg";
 
           return (
-            <div key={symbol} className="p-2 flex justify-between border-b last:border-none">
+            <div
+              key={symbol}
+              className="p-2 flex justify-between items-center border-b last:border-none"
+            >
               <img
-                src={LOGOS[stock.symbol] || "/logos/default.jpg"}
+                src={logo}
                 alt={symbol}
                 className="w-10 h-10 rounded-full mr-3"
               />
+
               <div className="flex-1">
                 <div className="font-semibold">{symbol}</div>
+
                 <div className="text-sm">
-                  <span className="font-bold">${stock.price.toFixed(2)}</span>
+                  <span className="font-bold">
+                    ${stock.price.toFixed(2)}
+                  </span>
                   <span className={`ml-2 ${up ? "text-green-500" : "text-red-500"}`}>
-                    {up ? "▲" : "▼"} {stock.percent}%
+                    {up ? "▲" : "▼"} {stock.percent.toFixed(2)}%
                   </span>
                 </div>
-                <div className="mt-1 flex gap-2">
+
+                <div className="mt-1 flex gap-2 items-center">
                   <input
                     type="number"
                     placeholder="Qty"
                     className="w-16 text-black p-1 rounded text-xs"
+                    value={profitInput[symbol] || ""}
                     onChange={(e) =>
-                      setProfitInput({ ...profitInput, [symbol]: e.target.value })
+                      setProfitInput((prev) => ({
+                        ...prev,
+                        [symbol]: e.target.value,
+                      }))
                     }
                   />
+
                   {profitInput[symbol] && (
                     <div className="text-xs">
                       💰 P/L:{" "}
@@ -111,6 +139,7 @@ function MultiStockWidget({ symbols }) {
                   )}
                 </div>
               </div>
+
               <div className="w-28 h-10">
                 <Sparklines data={stock.spark}>
                   <SparklinesLine
@@ -126,5 +155,3 @@ function MultiStockWidget({ symbols }) {
     </div>
   );
 }
-
-export default MultiStockWidget;

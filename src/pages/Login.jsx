@@ -19,14 +19,13 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const data = await apiFetch("/auth/token/", {
+      const data = await apiFetch("/auth/login/", {
         method: "POST",
         body: JSON.stringify({ email, password }),
       });
 
-      // data should have { access, refresh }
-      login(data.access, data.refresh);
-
+      // backend returns { access, refresh, email }
+      login(data.access, data.refresh, { email: data.email || email });
       navigate("/dashboard");
     } catch (err) {
       setError(err.message);
@@ -46,6 +45,7 @@ export default function Login() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
+          className="w-full border p-2 rounded"
         />
         <input
           type="password"
@@ -53,6 +53,7 @@ export default function Login() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
+          className="w-full border p-2 rounded"
         />
         <button
           type="submit"
