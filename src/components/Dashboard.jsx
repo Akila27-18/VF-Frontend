@@ -1,4 +1,3 @@
-// src/components/Dashboard.jsx
 import React, { useEffect, useState, useMemo, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -12,7 +11,8 @@ import SafeAside from "./SafeAside";
 import SummaryCard from "./dashboard/SummaryCard";
 import SmartInsights from "./dashboard/SmartInsights";
 import PieChartCard from "./dashboard/PieChartCard";
-import PieChart from "./dashboard/PieChart";
+import { PieChart } from "lucide-react";
+
 
 /* Images */
 import heroImg from "../assets/dashboard/hero.jpg";
@@ -39,34 +39,32 @@ export default function Dashboard() {
 
   const dashboardUsers = ["Alice", "Bob", "Charlie"];
 
-  /* ----------------- Fetch Expenses ----------------- */
+  // Fetch expenses on mount
   useEffect(() => {
+    if (!token) return;
+
     const fetchExpenses = async () => {
       try {
-        const data = await apiFetch("/expenses/");
+        const data = await apiFetch("/expenses/"); // token is sent inside apiFetch
         setExpenses(data);
         localStorage.setItem("expenses", JSON.stringify(data));
       } catch (err) {
         console.error(err);
         setError(err.message);
-        if (err.message.includes("token")) {
-          logout(); // force logout if token invalid
-        }
+        if (err.message.toLowerCase().includes("token")) logout();
       } finally {
         setLoading(false);
       }
     };
 
     fetchExpenses();
-  }, []);
+  }, [token]);
 
-  /* ----------------- Categories ----------------- */
   const categories = useMemo(() => {
     const setCats = new Set(expenses.map((e) => e.category || "Other"));
     return ["All", ...Array.from(setCats)];
   }, [expenses]);
 
-  /* ----------------- Filters ----------------- */
   const filteredExpenses = useMemo(() => {
     const q = search.trim().toLowerCase();
     let list = expenses;
@@ -79,7 +77,6 @@ export default function Dashboard() {
     return list;
   }, [expenses, filteredCategory, search]);
 
-  /* ----------------- Pie Chart Data ----------------- */
   const pieData = useMemo(() => {
     const totals = {};
     expenses.forEach((e) => {
@@ -92,19 +89,19 @@ export default function Dashboard() {
         {
           data: Object.values(totals),
           backgroundColor: [
-            "#FF6A00", "#FF7F26", "#FF934D", "#FFA873", "#FFBD99", "#FFD2BF"
+            "#FF6A00", "#FF7F26", "#FF934D", "#FFA873", "#FFBD99", "#FFD2BF",
           ].slice(0, Object.keys(totals).length),
         },
       ],
     };
   }, [expenses]);
 
-  /* ----------------- CRUD Functions ----------------- */
   const saveExpensesLocal = (data) => {
     setExpenses(data);
     localStorage.setItem("expenses", JSON.stringify(data));
   };
 
+  // Add expense with token
   const handleAddExpense = async (expense) => {
     try {
       const res = await apiFetch("/expenses/", {
@@ -114,7 +111,8 @@ export default function Dashboard() {
       saveExpensesLocal([res, ...expenses]);
       setShowAdd(false);
     } catch (err) {
-      alert(err.message);
+      alert("Error adding expense: " + err.message);
+      if (err.message.toLowerCase().includes("token")) logout();
     }
   };
 
@@ -123,20 +121,19 @@ export default function Dashboard() {
       await apiFetch(`/expenses/${id}/`, { method: "DELETE" });
       saveExpensesLocal(expenses.filter((e) => e.id !== id));
     } catch (err) {
-      alert(err.message);
+      alert("Error deleting expense: " + err.message);
+      if (err.message.toLowerCase().includes("token")) logout();
     }
   };
 
   return (
     <div className="space-y-6 px-4 md:px-8 min-h-screen bg-orange-50">
-      {/* Header */}
       <DashboardHeader
         title="Welcome back"
         subtitle="Overview of your shared and personal finances."
         image={heroImg}
       />
 
-      {/* Quick actions */}
       <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <QuickActions img={addExpenseImg} title="Add Expense" onClick={() => setShowAdd(true)} />
         <QuickActions img={insightsImg} title="Insights" onClick={() => navigate("/dashboard/insights")} />
@@ -144,13 +141,11 @@ export default function Dashboard() {
         <QuickActions img={splitBillImg} title="Split Bill" onClick={() => setShowSplit(true)} />
       </div>
 
-      {/* Summary + Insights */}
       <div className="grid md:grid-cols-2 gap-6">
         <SummaryCard expenses={expenses} />
         <SmartInsights expenses={expenses} />
       </div>
 
-      {/* Filters */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div className="flex items-center gap-3 overflow-x-auto">
           {categories.map((cat) => (
@@ -167,17 +162,14 @@ export default function Dashboard() {
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-2">
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search here..."
-            className="border rounded px-3 py-1 text-sm"
-          />
-        </div>
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search here..."
+          className="border rounded px-3 py-1 text-sm"
+        />
       </div>
 
-      {/* Main + Sidebar */}
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           {loading && <div className="text-center py-6">Loading...</div>}
@@ -205,7 +197,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Modals */}
       <AddExpenseModal open={showAdd} onClose={() => setShowAdd(false)} onAdd={handleAddExpense} />
       <SplitBillModal
         open={showSplit}

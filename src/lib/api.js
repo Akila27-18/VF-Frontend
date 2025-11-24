@@ -1,19 +1,17 @@
+// src/lib/api.js
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 export async function apiFetch(endpoint, options = {}) {
-  const token = localStorage.getItem("token");
+  // Always use access token for API requests
+  const accessToken = localStorage.getItem("accessToken");
 
   const headers = {
     "Content-Type": "application/json",
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
     ...(options.headers || {}),
   };
 
-  // Ensure endpoint starts with / and ends with /
-  let url = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
-  if (!url.endsWith("/")) url += "/";
-
-  const res = await fetch(`${API_URL}${url}`, {
+  const res = await fetch(`${API_URL}${endpoint}`, {
     ...options,
     headers,
   });

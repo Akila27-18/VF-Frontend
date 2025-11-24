@@ -15,13 +15,24 @@ export default function AddExpenseModal({ open, onClose, onAdd }) {
     setError("");
 
     try {
-      const payload = { title, amount, category };
+      if (!title || !amount) {
+        throw new Error("Title and Amount are required");
+      }
+
+      const payload = {
+        title,
+        amount: Number(amount), // ensure it's a number
+        category: category || "Other",
+      };
+
       const newExpense = await apiFetch("/expenses/", {
         method: "POST",
         body: JSON.stringify(payload),
       });
 
       onAdd(newExpense);
+
+      // reset form
       setTitle("");
       setAmount("");
       setCategory("");

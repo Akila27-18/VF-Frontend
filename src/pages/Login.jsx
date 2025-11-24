@@ -1,3 +1,4 @@
+// src/pages/Login.jsx
 import React, { useState, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { apiFetch } from "../lib/api";
@@ -23,7 +24,8 @@ export default function Login() {
         body: JSON.stringify({ email, password }),
       });
 
-      login(data.token); // store in context + localStorage
+      // data should have { access, refresh }
+      login(data.access, data.refresh);
       navigate("/dashboard");
     } catch (err) {
       setError(err.message);
@@ -37,35 +39,29 @@ export default function Login() {
       <h1 className="text-2xl font-bold mb-4">Login</h1>
       {error && <div className="text-red-500 mb-3">{error}</div>}
       <form className="space-y-3" onSubmit={handleSubmit}>
-        <div>
-          <label className="block text-sm font-medium mb-1">Email</label>
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full border rounded px-3 py-2"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Password</label>
-          <input
-            type="password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full border rounded px-3 py-2"
-          />
-        </div>
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
         <button
           type="submit"
-          disabled={loading}
           className="w-full bg-orange-500 text-white py-2 rounded hover:bg-orange-600"
+          disabled={loading}
         >
           {loading ? "Logging in..." : "Login"}
         </button>
       </form>
-      <div className="mt-4 text-sm flex justify-between">
+      <div className="mt-4 flex justify-between">
         <Link to="/signup" className="text-orange-500 hover:underline">
           Sign Up
         </Link>

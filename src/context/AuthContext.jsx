@@ -1,29 +1,32 @@
+// src/context/AuthContext.jsx
 import React, { createContext, useState, useEffect } from "react";
 
 export const AuthContext = createContext();
 
 export default function AuthProvider({ children }) {
-  const [token, setToken] = useState(null);
+  const [accessToken, setAccessToken] = useState(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem("token");
-    if (stored) setToken(stored);
+    const storedAccess = localStorage.getItem("accessToken");
+    setAccessToken(storedAccess);
   }, []);
 
-  const login = (jwtToken) => {
-    localStorage.setItem("token", jwtToken);
-    setToken(jwtToken);
+  const login = (access, refresh) => {
+    localStorage.setItem("accessToken", access);
+    localStorage.setItem("refreshToken", refresh);
+    setAccessToken(access);
   };
 
   const logout = () => {
-    localStorage.removeItem("token");
-    setToken(null);
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    setAccessToken(null);
   };
 
-  const isAuthenticated = !!token;
+  const isAuthenticated = !!accessToken;
 
   return (
-    <AuthContext.Provider value={{ token, login, logout, isAuthenticated }}>
+    <AuthContext.Provider value={{ accessToken, login, logout, isAuthenticated }}>
       {children}
     </AuthContext.Provider>
   );
