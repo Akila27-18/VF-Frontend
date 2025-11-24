@@ -1,12 +1,13 @@
+// src/pages/Signup.jsx
 import React, { useState, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { apiFetch } from "../lib/api";
 import { AuthContext } from "../context/AuthContext";
 
-const API_URL = import.meta.env.VITE_BACKEND_URL || "https://vf-backend-1.onrender.com";
-
 export default function Signup() {
-  const { login } = useContext(AuthContext);
   const navigate = useNavigate();
+  const { login: setAuthToken } = useContext(AuthContext);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -18,20 +19,19 @@ export default function Signup() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_URL}/auth/signup/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+      await apiFetch("/auth/signup/", 
+        { method: "POST", 
+          body: JSON.stringify({ email, password }) 
+        });
 
-      const data = await res.json();
+      // Save token & set context
+      setAuthToken(data.token);
+      localStorage.setItem("userEmail", email);
 
-      if (!res.ok) throw new Error(data.detail || "Signup failed");
-
-      login(data.access); // auto login after signup
       navigate("/dashboard");
     } catch (err) {
-      setError(err.message);
+      console.error(err);
+      setError(err.message || "Signup failed");
     } finally {
       setLoading(false);
     }
@@ -41,9 +41,9 @@ export default function Signup() {
     <div className="max-w-md mx-auto mt-20 p-6 bg-white rounded-xl shadow">
       <h1 className="text-2xl font-bold mb-4">Sign Up</h1>
       {error && <div className="text-red-500 mb-3">{error}</div>}
-      <form onSubmit={handleSubmit} className="space-y-3">
+      <form className="space-y-3" onSubmit={handleSubmit}>
         <div>
-          <label>Email</label>
+          <label className="block text-sm font-medium mb-1">Email</label>
           <input
             type="email"
             required
@@ -53,7 +53,7 @@ export default function Signup() {
           />
         </div>
         <div>
-          <label>Password</label>
+          <label className="block text-sm font-medium mb-1">Password</label>
           <input
             type="password"
             required
@@ -70,7 +70,7 @@ export default function Signup() {
           {loading ? "Signing up..." : "Sign Up"}
         </button>
       </form>
-      <div className="mt-4 flex justify-between text-sm">
+      <div className="mt-4 text-sm flex justify-between">
         <Link to="/login" className="text-orange-500 hover:underline">Login</Link>
       </div>
     </div>
