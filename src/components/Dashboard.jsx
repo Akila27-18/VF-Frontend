@@ -1,5 +1,5 @@
 // src/components/Dashboard.jsx
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 
 /* Components */
@@ -23,9 +23,11 @@ import paymentsImg from "../assets/dashboard/payments.jpg";
 
 /* API */
 import { apiFetch } from "../lib/api";
+import { AuthContext } from "../context/AuthContext";
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { token, logout } = useContext(AuthContext);
 
   const [expenses, setExpenses] = useState([]);
   const [filteredCategory, setFilteredCategory] = useState("All");
@@ -39,19 +41,17 @@ export default function Dashboard() {
 
   /* ----------------- Fetch Expenses ----------------- */
   useEffect(() => {
-    const saved = localStorage.getItem("expenses");
-    if (saved) {
-      setExpenses(JSON.parse(saved));
-      setLoading(false);
-    }
-
     const fetchExpenses = async () => {
       try {
         const data = await apiFetch("/expenses/");
-        setExpenses(data.sort((a, b) => (b.order || 0) - (a.order || 0)));
+        setExpenses(data);
         localStorage.setItem("expenses", JSON.stringify(data));
       } catch (err) {
-        setError(err.message || "Failed to load expenses");
+        console.error(err);
+        setError(err.message);
+        if (err.message.includes("token")) {
+          logout(); // force logout if token invalid
+        }
       } finally {
         setLoading(false);
       }
@@ -107,15 +107,14 @@ export default function Dashboard() {
 
   const handleAddExpense = async (expense) => {
     try {
-      const payload = { ...expense, userId: localStorage.getItem("userId") };
-      const data = await apiFetch("/expenses/", {
+      const res = await apiFetch("/expenses/", {
         method: "POST",
-        body: JSON.stringify(payload),
+        body: JSON.stringify(expense),
       });
-      saveExpensesLocal([data, ...expenses]);
+      saveExpensesLocal([res, ...expenses]);
       setShowAdd(false);
     } catch (err) {
-      alert(err.message || "Failed to add expense");
+      alert(err.message);
     }
   };
 
@@ -124,14 +123,12 @@ export default function Dashboard() {
       await apiFetch(`/expenses/${id}/`, { method: "DELETE" });
       saveExpensesLocal(expenses.filter((e) => e.id !== id));
     } catch (err) {
-      alert(err.message || "Failed to delete expense");
+      alert(err.message);
     }
   };
 
   return (
     <div className="space-y-6 px-4 md:px-8 min-h-screen bg-orange-50">
-      {error && <div className="text-red-500">{error}</div>}
-
       {/* Header */}
       <DashboardHeader
         title="Welcome back"
@@ -182,11 +179,11 @@ export default function Dashboard() {
 
       {/* Main + Sidebar */}
       <div className="grid lg:grid-cols-3 gap-6">
-        {/* Left (2/3) */}
         <div className="lg:col-span-2 space-y-6">
-          <PieChartCard data={pieData} />
-          {loading && <div>Loading expenses...</div>}
-          {!loading && filteredExpenses.length === 0 && <div className="p-4 bg-orange-200 rounded shadow text-center">No expenses found</div>}
+          {loading && <div className="text-center py-6">Loading...</div>}
+          {!loading && filteredExpenses.length === 0 && (
+            <div className="p-4 bg-orange-200 rounded shadow text-center">No expenses found</div>
+          )}
           {filteredExpenses.map((e) => (
             <ExpenseCard
               key={e.id}
@@ -197,12 +194,12 @@ export default function Dashboard() {
               onDelete={handleDeleteExpense}
             />
           ))}
+          <PieChartCard data={pieData} />
         </div>
 
-        {/* Right Sidebar */}
         <div className="order-first lg:order-last">
           <SafeAside
-            wsUrl={`${import.meta.env.VITE_BACKEND_URL?.replace(/^http/, "ws") || "ws://127.0.0.1:5000"}/ws/chat/`}
+            wsUrl={`${import.meta.env.VITE_BACKEND_URL.replace(/^http/, "ws")}/ws/chat/`}
             stockSymbols={["GOOGL","AMZN","AAPL","TSLA","MSFT","RELIANCE","TCS","HDFC"]}
           />
         </div>
