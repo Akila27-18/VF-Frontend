@@ -1,9 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { apiFetch } from "../lib/api";
+import { AuthContext } from "../context/AuthContext";
 
 export default function Signup() {
   const navigate = useNavigate();
+  const { login } = useContext(AuthContext);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -20,10 +23,7 @@ export default function Signup() {
         body: JSON.stringify({ email, password }),
       });
 
-      // Save token in localStorage
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("userEmail", email);
-
+      login(data.token); // store token
       navigate("/dashboard");
     } catch (err) {
       setError(err.message);
@@ -36,23 +36,27 @@ export default function Signup() {
     <div className="max-w-md mx-auto mt-20 p-6 bg-white rounded-xl shadow">
       <h1 className="text-2xl font-bold mb-4">Sign Up</h1>
       {error && <div className="text-red-500 mb-3">{error}</div>}
-      <form onSubmit={handleSubmit} className="space-y-3">
-        <input
-          type="email"
-          required
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full border rounded px-3 py-2"
-        />
-        <input
-          type="password"
-          required
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full border rounded px-3 py-2"
-        />
+      <form className="space-y-3" onSubmit={handleSubmit}>
+        <div>
+          <label className="block text-sm font-medium mb-1">Email</label>
+          <input
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full border rounded px-3 py-2"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">Password</label>
+          <input
+            type="password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full border rounded px-3 py-2"
+          />
+        </div>
         <button
           type="submit"
           disabled={loading}
@@ -62,7 +66,9 @@ export default function Signup() {
         </button>
       </form>
       <div className="mt-4 text-sm flex justify-between">
-        <Link to="/login" className="text-orange-500 hover:underline">Login</Link>
+        <Link to="/login" className="text-orange-500 hover:underline">
+          Already have an account?
+        </Link>
       </div>
     </div>
   );

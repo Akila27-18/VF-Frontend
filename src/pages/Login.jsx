@@ -1,9 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { apiFetch } from "../lib/api";
+import { AuthContext } from "../context/AuthContext";
 
 export default function Login() {
   const navigate = useNavigate();
+  const { login } = useContext(AuthContext);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -20,10 +23,7 @@ export default function Login() {
         body: JSON.stringify({ email, password }),
       });
 
-      // Save token in localStorage
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("userEmail", email);
-
+      login(data.token); // store in context + localStorage
       navigate("/dashboard");
     } catch (err) {
       setError(err.message);
@@ -36,23 +36,27 @@ export default function Login() {
     <div className="max-w-md mx-auto mt-20 p-6 bg-white rounded-xl shadow">
       <h1 className="text-2xl font-bold mb-4">Login</h1>
       {error && <div className="text-red-500 mb-3">{error}</div>}
-      <form onSubmit={handleSubmit} className="space-y-3">
-        <input
-          type="email"
-          required
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full border rounded px-3 py-2"
-        />
-        <input
-          type="password"
-          required
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full border rounded px-3 py-2"
-        />
+      <form className="space-y-3" onSubmit={handleSubmit}>
+        <div>
+          <label className="block text-sm font-medium mb-1">Email</label>
+          <input
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full border rounded px-3 py-2"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">Password</label>
+          <input
+            type="password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full border rounded px-3 py-2"
+          />
+        </div>
         <button
           type="submit"
           disabled={loading}
@@ -62,8 +66,12 @@ export default function Login() {
         </button>
       </form>
       <div className="mt-4 text-sm flex justify-between">
-        <Link to="/signup" className="text-orange-500 hover:underline">Sign Up</Link>
-        <Link to="/forgot-password" className="text-orange-500 hover:underline">Forgot Password?</Link>
+        <Link to="/signup" className="text-orange-500 hover:underline">
+          Sign Up
+        </Link>
+        <Link to="/forgot-password" className="text-orange-500 hover:underline">
+          Forgot Password?
+        </Link>
       </div>
     </div>
   );

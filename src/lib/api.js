@@ -9,7 +9,11 @@ export async function apiFetch(endpoint, options = {}) {
     ...(options.headers || {}),
   };
 
-  const res = await fetch(`${API_URL}${endpoint}`, {
+  // Ensure endpoint starts with / and ends with /
+  let url = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+  if (!url.endsWith("/")) url += "/";
+
+  const res = await fetch(`${API_URL}${url}`, {
     ...options,
     headers,
   });
