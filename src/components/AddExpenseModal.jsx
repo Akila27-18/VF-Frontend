@@ -9,91 +9,88 @@ export default function AddExpenseModal({ open, onClose, onAdd }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+  if (!open) return null;
+
+  const handleSubmit = async () => {
     setError("");
+    const amt = parseFloat(amount);
+    if (!title || !amt) {
+      setError("Please enter a valid title and amount.");
+      return;
+    }
 
+    setLoading(true);
     try {
-      if (!title || !amount) throw new Error("Title and Amount are required");
-
-      const payload = {
-        title,
-        amount: Number(amount),
-        category: category || "Other",
-      };
-
       const newExpense = await apiFetch("/expenses/", {
         method: "POST",
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          title,
+          amount: amt,
+          category,
+          shared: false,
+        }),
       });
 
-      onAdd(newExpense);
+      onAdd(newExpense); // update dashboard
+      onClose();
 
-      // Reset form
       setTitle("");
       setAmount("");
       setCategory("");
-      onClose();
     } catch (err) {
-      setError(err.message);
+      console.error(err);
+      setError("Failed to add expense.");
     } finally {
       setLoading(false);
     }
   };
 
-  if (!open) return null;
-
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded shadow-md w-full max-w-md">
-        <h2 className="text-xl font-semibold mb-4">Add Expense</h2>
+    <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+      <div className="bg-white rounded-xl p-6 w-full max-w-md space-y-4">
+        <h2 className="text-xl font-semibold">Add Expense</h2>
 
-        {error && <div className="text-red-600 mb-2">{error}</div>}
+        {error && <div className="text-red-500 text-sm">{error}</div>}
 
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <input
-            type="text"
-            placeholder="Title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full border px-3 py-2 rounded"
-            required
-          />
-          <input
-            type="number"
-            placeholder="Amount"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            className="w-full border px-3 py-2 rounded"
-            required
-          />
-          <input
-            type="text"
-            placeholder="Category"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="w-full border px-3 py-2 rounded"
-          />
+        <input
+          type="text"
+          placeholder="Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="w-full border rounded px-3 py-2"
+        />
 
-          <div className="flex justify-end gap-2 mt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 rounded bg-gray-300"
-              disabled={loading}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 rounded bg-orange-500 text-white"
-              disabled={loading}
-            >
-              {loading ? "Adding..." : "Add Expense"}
-            </button>
-          </div>
-        </form>
+        <input
+          type="number"
+          placeholder="Amount"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          className="w-full border rounded px-3 py-2"
+        />
+
+        <input
+          type="text"
+          placeholder="Category (optional)"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          className="w-full border rounded px-3 py-2"
+        />
+
+        <div className="flex justify-end gap-2">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={loading}
+            className="px-4 py-2 rounded bg-orange-600 text-white hover:bg-orange-700"
+          >
+            {loading ? "Adding..." : "Add Expense"}
+          </button>
+        </div>
       </div>
     </div>
   );

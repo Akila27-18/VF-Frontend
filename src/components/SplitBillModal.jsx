@@ -2,118 +2,129 @@
 import React, { useState } from "react";
 import { apiFetch } from "../lib/api";
 
-export default function SplitBillModal({ open, onClose, users = [], onAdd }) {
-  const [title, setTitle] = useState("");
+export default function SplitBillModal({ open, onClose, users, onAdd }) {
   const [amount, setAmount] = useState("");
+  const [title, setTitle] = useState("");
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleUserToggle = (user) => {
+  if (!open) return null;
+
+  const handleToggleUser = (user) => {
     setSelectedUsers((prev) =>
-      prev.includes(user) ? prev.filter((u) => u !== user) : [...prev, user]
+      prev.includes(user)
+        ? prev.filter((u) => u !== user)
+        : [...prev, user]
     );
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!selectedUsers.length) {
-      setError("Select at least one user");
+  const handleSubmit = async () => {
+    setError("");
+    const amt = parseFloat(amount);
+    if (!title || !amt || selectedUsers.length === 0) {
+      setError("Please fill all fields and select users.");
       return;
     }
 
+    const splitAmount = amt / (selectedUsers.length + 1); // include yourself
+    const newExpenses = [];
+
     setLoading(true);
-    setError("");
-
     try {
-      const splitAmount = Number(amount) / selectedUsers.length;
-      const newExpenses = await Promise.all(
-        selectedUsers.map(() =>
-          apiFetch("/expenses/", {
-            method: "POST",
-            body: JSON.stringify({
-              title,
-              amount: splitAmount,
-              category: "Split Bill",
-            }),
-          })
-        )
-      );
+      // create an expense for yourself
+      const yourExpense = await apiFetch("/expenses/", {
+        method: "POST",
+        body: JSON.stringify({
+          title,
+          amount: splitAmount,
+          category: "Shared",
+          shared: true,
+        }),
+      });
+      newExpenses.push(yourExpense);
 
-      onAdd(newExpenses);
-      setTitle("");
-      setAmount("");
-      setSelectedUsers([]);
+      // create expenses for selected users
+      for (let u of selectedUsers) {
+        const expense = await apiFetch("/expenses/", {
+          method: "POST",
+          body: JSON.stringify({
+            title: `${title} (shared with ${u})`,
+            amount: splitAmount,
+            category: "Shared",
+            shared: true,
+          }),
+        });
+        newExpenses.push(expense);
+      }
+
+      onAdd(newExpenses); // update dashboard
       onClose();
+      setAmount("");
+      setTitle("");
+      setSelectedUsers([]);
     } catch (err) {
-      setError(err.message);
+      console.error(err);
+      setError("Failed to create split expenses.");
     } finally {
       setLoading(false);
     }
   };
 
-  if (!open) return null;
-
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded shadow-md w-full max-w-md">
-        <h2 className="text-xl font-semibold mb-4">Split Bill</h2>
+    <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+      <div className="bg-white rounded-xl p-6 w-full max-w-md space-y-4">
+        <h2 className="text-xl font-semibold">Split a Bill</h2>
 
-        {error && <div className="text-red-600 mb-2">{error}</div>}
+        {error && <div className="text-red-500 text-sm">{error}</div>}
 
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <input
-            type="text"
-            placeholder="Title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full border px-3 py-2 rounded"
-            required
-          />
-          <input
-            type="number"
-            placeholder="Total Amount"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            className="w-full border px-3 py-2 rounded"
-            required
-          />
+        <input
+          type="text"
+          placeholder="Expense Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="w-full border rounded px-3 py-2"
+        />
 
-          <div className="flex flex-wrap gap-2">
-            {users.map((user) => (
-              <button
-                key={user}
-                type="button"
-                onClick={() => handleUserToggle(user)}
-                className={`px-3 py-1 rounded border ${
-                  selectedUsers.includes(user)
-                    ? "bg-orange-500 text-white"
-                    : "bg-white text-gray-700"
-                }`}
-              >
-                {user}
-              </button>
-            ))}
-          </div>
+        <input
+          type="number"
+          placeholder="Total Amount"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          className="w-full border rounded px-3 py-2"
+        />
 
-          <div className="flex justify-end gap-2 mt-4">
+        <div className="flex flex-wrap gap-2">
+          {users.map((u) => (
             <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 rounded bg-gray-300"
-              disabled={loading}
+              key={u}
+              onClick={() => handleToggleUser(u)}
+              className={`px-3 py-1 rounded ${
+                selectedUsers.includes(u)
+                  ? "bg-orange-600 text-white"
+                  : "bg-gray-200 text-gray-800"
+              }`}
             >
-              Cancel
+              {u}
             </button>
-            <button
-              type="submit"
-              className="px-4 py-2 rounded bg-orange-500 text-white"
-              disabled={loading}
-            >
-              {loading ? "Splitting..." : "Split Bill"}
-            </button>
-          </div>
-        </form>
+          ))}
+        </div>
+
+        <div className="flex justify-end gap-2">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={loading}
+            className="px-4 py-2 rounded bg-orange-600 text-white hover:bg-orange-700"
+          >
+            {loading ? "Splitting..." : "Split Bill"}
+          </button>
+        </div>
       </div>
     </div>
   );

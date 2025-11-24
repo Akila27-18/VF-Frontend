@@ -6,17 +6,24 @@ export async function apiFetch(endpoint, options = {}) {
   const accessToken = localStorage.getItem("accessToken");
 
   // endpoints that should NOT include Authorization header
-  const noAuthEndpoints = ["/auth/login/", "/auth/signup/", "/auth/refresh/", "/auth/password-reset/"];
+  const noAuthEndpoints = [
+    "/auth/login/",
+    "/auth/signup/",
+    "/auth/refresh/",
+    "/auth/password-reset/"
+  ];
 
-  const isNoAuth = noAuthEndpoints.some((p) => endpoint.startsWith(p));
+  const isNoAuth = noAuthEndpoints.some(p => endpoint.startsWith(p));
 
   const headers = {
     "Content-Type": "application/json",
     ...(accessToken && !isNoAuth ? { Authorization: `Bearer ${accessToken}` } : {}),
-    ...(options.headers || {}),
+    ...(options.headers || {})
   };
 
-  const res = await fetch(`${API_URL}${endpoint}`, {
+  const url = `${API_URL}${endpoint.endsWith('/') ? endpoint : endpoint + '/'}`;
+
+  const res = await fetch(url, {
     ...options,
     headers,
   });
@@ -30,7 +37,12 @@ export async function apiFetch(endpoint, options = {}) {
   }
 
   if (!res.ok) {
-    const err = data?.detail || data?.error || data?.message || res.statusText || "API request failed";
+    const err =
+      data?.detail ||
+      data?.error ||
+      data?.message ||
+      res.statusText ||
+      "API request failed";
     throw new Error(err);
   }
 
