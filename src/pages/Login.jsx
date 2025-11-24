@@ -1,12 +1,9 @@
-import React, { useState, useContext } from "react";
+import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { apiFetch } from "../lib/api";
-import { AuthContext } from "../context/AuthContext";
 
 export default function Login() {
   const navigate = useNavigate();
-  const { login } = useContext(AuthContext);
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -23,8 +20,11 @@ export default function Login() {
         body: JSON.stringify({ email, password }),
       });
 
-      login(data.token); // store token in context + localStorage
-      navigate("/dashboard"); // redirect
+      // Save token in localStorage
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("userEmail", email);
+
+      navigate("/dashboard");
     } catch (err) {
       setError(err.message);
     } finally {
@@ -37,26 +37,22 @@ export default function Login() {
       <h1 className="text-2xl font-bold mb-4">Login</h1>
       {error && <div className="text-red-500 mb-3">{error}</div>}
       <form onSubmit={handleSubmit} className="space-y-3">
-        <div>
-          <label>Email</label>
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full border rounded px-3 py-2"
-          />
-        </div>
-        <div>
-          <label>Password</label>
-          <input
-            type="password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full border rounded px-3 py-2"
-          />
-        </div>
+        <input
+          type="email"
+          required
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full border rounded px-3 py-2"
+        />
+        <input
+          type="password"
+          required
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full border rounded px-3 py-2"
+        />
         <button
           type="submit"
           disabled={loading}

@@ -1,26 +1,17 @@
-// src/api.js
-const API_URL = import.meta.env.VITE_BACKEND_URL || "https://vf-backend-1.onrender.com";
+const API_URL = import.meta.env.VITE_BACKEND_URL;
 
-/**
- * Generic fetch wrapper that includes JWT token if available.
- * @param {string} endpoint - API endpoint (e.g., "/auth/login/")
- * @param {object} options - fetch options (method, body, headers)
- * @returns {Promise<object>} JSON response
- */
 export async function apiFetch(endpoint, options = {}) {
   const token = localStorage.getItem("token");
 
-  const defaultHeaders = {
+  const headers = {
     "Content-Type": "application/json",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(options.headers || {}),
   };
 
   const res = await fetch(`${API_URL}${endpoint}`, {
     ...options,
-    headers: {
-      ...defaultHeaders,
-      ...(options.headers || {}),
-    },
+    headers,
   });
 
   const contentType = res.headers.get("content-type");
@@ -32,8 +23,8 @@ export async function apiFetch(endpoint, options = {}) {
   }
 
   if (!res.ok) {
-    const errorMsg = data?.detail || data?.error || res.statusText;
-    throw new Error(errorMsg || "API request failed");
+    const err = data?.detail || data?.error || res.statusText || "API request failed";
+    throw new Error(err);
   }
 
   return data;
