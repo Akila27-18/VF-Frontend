@@ -13,8 +13,6 @@ import SummaryCard from "./dashboard/SummaryCard";
 import SmartInsights from "./dashboard/SmartInsights";
 import PieChartCard from "./dashboard/PieChartCard";
 import PieChart from "./dashboard/PieChart";
-import ForgotPassword from "./ForgotPassword";
-
 
 /* Images */
 import heroImg from "../assets/dashboard/hero.jpg";
@@ -23,13 +21,11 @@ import splitBillImg from "../assets/dashboard/split-bill.jpg";
 import insightsImg from "../assets/dashboard/insights.jpg";
 import paymentsImg from "../assets/dashboard/payments.jpg";
 
-/* API Hook */
+/* API */
 import { apiFetch } from "../lib/api";
-
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const api = useApi();
 
   const [expenses, setExpenses] = useState([]);
   const [filteredCategory, setFilteredCategory] = useState("All");
@@ -50,14 +46,15 @@ export default function Dashboard() {
     }
 
     const fetchExpenses = async () => {
-      const res = await api.get("/api/expenses/");
-      if (res.ok) {
-        setExpenses(res.data.sort((a, b) => (b.order || 0) - (a.order || 0)));
-        localStorage.setItem("expenses", JSON.stringify(res.data));
-      } else {
-        setError(res.data?.error || "Failed to load expenses");
+      try {
+        const data = await apiFetch("/expenses/");
+        setExpenses(data.sort((a, b) => (b.order || 0) - (a.order || 0)));
+        localStorage.setItem("expenses", JSON.stringify(data));
+      } catch (err) {
+        setError(err.message || "Failed to load expenses");
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     fetchExpenses();
@@ -109,27 +106,32 @@ export default function Dashboard() {
   };
 
   const handleAddExpense = async (expense) => {
-    const payload = { ...expense, userId: localStorage.getItem("userId") };
-    const res = await api.post("/api/expenses/", payload);
-    if (res.ok) {
-      saveExpensesLocal([res.data, ...expenses]);
+    try {
+      const payload = { ...expense, userId: localStorage.getItem("userId") };
+      const data = await apiFetch("/expenses/", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      saveExpensesLocal([data, ...expenses]);
       setShowAdd(false);
-    } else {
-      alert(res.data?.error || "Failed to add expense");
+    } catch (err) {
+      alert(err.message || "Failed to add expense");
     }
   };
 
   const handleDeleteExpense = async (id) => {
-    const res = await api.delete(`/api/expenses/${id}/`);
-    if (res.ok) {
+    try {
+      await apiFetch(`/expenses/${id}/`, { method: "DELETE" });
       saveExpensesLocal(expenses.filter((e) => e.id !== id));
-    } else {
-      alert(res.data?.error || "Failed to delete expense");
+    } catch (err) {
+      alert(err.message || "Failed to delete expense");
     }
   };
 
   return (
     <div className="space-y-6 px-4 md:px-8 min-h-screen bg-orange-50">
+      {error && <div className="text-red-500">{error}</div>}
+
       {/* Header */}
       <DashboardHeader
         title="Welcome back"
@@ -183,27 +185,18 @@ export default function Dashboard() {
         {/* Left (2/3) */}
         <div className="lg:col-span-2 space-y-6">
           <PieChartCard data={pieData} />
-          {loading && expenses.length === 0 && (
-            <div className="animate-pulse space-y-4">
-              <div className="h-4 bg-gray-300 w-1/3 rounded"></div>
-              <div className="h-4 bg-gray-300 w-1/2 rounded"></div>
-              <div className="h-4 bg-gray-300 w-2/3 rounded"></div>
-            </div>
-          )}
-          {!loading && filteredExpenses.length === 0 ? (
-            <div className="p-4 bg-orange-200 rounded shadow text-center">No expenses found</div>
-          ) : (
-            filteredExpenses.map((e) => (
-              <ExpenseCard
-                key={e.id}
-                expense={e}
-                onEdit={(updated) =>
-                  saveExpensesLocal(expenses.map((ex) => (ex.id === updated.id ? updated : ex)))
-                }
-                onDelete={handleDeleteExpense}
-              />
-            ))
-          )}
+          {loading && <div>Loading expenses...</div>}
+          {!loading && filteredExpenses.length === 0 && <div className="p-4 bg-orange-200 rounded shadow text-center">No expenses found</div>}
+          {filteredExpenses.map((e) => (
+            <ExpenseCard
+              key={e.id}
+              expense={e}
+              onEdit={(updated) =>
+                saveExpensesLocal(expenses.map((ex) => (ex.id === updated.id ? updated : ex)))
+              }
+              onDelete={handleDeleteExpense}
+            />
+          ))}
         </div>
 
         {/* Right Sidebar */}
