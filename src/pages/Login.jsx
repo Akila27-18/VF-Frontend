@@ -19,13 +19,14 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const data = await apiFetch("/auth/login/", {
+      const data = await apiFetch("/auth/token/", {
         method: "POST",
         body: JSON.stringify({ email, password }),
       });
 
       // data should have { access, refresh }
       login(data.access, data.refresh);
+
       navigate("/dashboard");
     } catch (err) {
       setError(err.message);
