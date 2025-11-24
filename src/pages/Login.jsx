@@ -1,4 +1,3 @@
-// src/pages/Login.jsx
 import React, { useState, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { apiFetch } from "../lib/api";
@@ -6,7 +5,7 @@ import { AuthContext } from "../context/AuthContext";
 
 export default function Login() {
   const navigate = useNavigate();
-  const { login: setAuthToken } = useContext(AuthContext);
+  const { login } = useContext(AuthContext);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -19,21 +18,15 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const data = await apiFetch("/auth/login/", 
-        { 
-          method: "POST", 
-          body: JSON.stringify({ email, password })
-         });
-     
+      const data = await apiFetch("/auth/login/", {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      });
 
-      // Save token & set context
-      setAuthToken(data.token);
-      localStorage.setItem("userEmail", email);
-
-      navigate("/dashboard");
+      login(data.token); // store token in context + localStorage
+      navigate("/dashboard"); // redirect
     } catch (err) {
-      console.error(err);
-      setError(err.message || "Login failed");
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -43,9 +36,9 @@ export default function Login() {
     <div className="max-w-md mx-auto mt-20 p-6 bg-white rounded-xl shadow">
       <h1 className="text-2xl font-bold mb-4">Login</h1>
       {error && <div className="text-red-500 mb-3">{error}</div>}
-      <form className="space-y-3" onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="space-y-3">
         <div>
-          <label className="block text-sm font-medium mb-1">Email</label>
+          <label>Email</label>
           <input
             type="email"
             required
@@ -55,7 +48,7 @@ export default function Login() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">Password</label>
+          <label>Password</label>
           <input
             type="password"
             required
@@ -74,7 +67,7 @@ export default function Login() {
       </form>
       <div className="mt-4 text-sm flex justify-between">
         <Link to="/signup" className="text-orange-500 hover:underline">Sign Up</Link>
-        <Link to="/password-reset" className="text-orange-500 hover:underline">Forgot Password?</Link>
+        <Link to="/forgot-password" className="text-orange-500 hover:underline">Forgot Password?</Link>
       </div>
     </div>
   );

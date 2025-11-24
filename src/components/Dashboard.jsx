@@ -24,7 +24,8 @@ import insightsImg from "../assets/dashboard/insights.jpg";
 import paymentsImg from "../assets/dashboard/payments.jpg";
 
 /* API Hook */
-import { useApi } from "../lib/api";
+import { apiFetch } from "../lib/api";
+
 
 export default function Dashboard() {
   const navigate = useNavigate();

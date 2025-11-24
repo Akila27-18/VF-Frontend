@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useApi } from "../lib/api"; // or your existing api hook/context
+import { apiFetch } from "../lib/api";
+ // or your existing api hook/context
 
 export default function NewsFeed() {
   const api = useApi();

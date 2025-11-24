@@ -1,4 +1,3 @@
-// src/pages/Signup.jsx
 import React, { useState, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { apiFetch } from "../lib/api";
@@ -6,7 +5,7 @@ import { AuthContext } from "../context/AuthContext";
 
 export default function Signup() {
   const navigate = useNavigate();
-  const { login: setAuthToken } = useContext(AuthContext);
+  const { login } = useContext(AuthContext);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -19,19 +18,15 @@ export default function Signup() {
     setLoading(true);
 
     try {
-      await apiFetch("/auth/signup/", 
-        { method: "POST", 
-          body: JSON.stringify({ email, password }) 
-        });
+      const data = await apiFetch("/auth/signup/", {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      });
 
-      // Save token & set context
-      setAuthToken(data.token);
-      localStorage.setItem("userEmail", email);
-
+      login(data.token); // store token immediately after signup
       navigate("/dashboard");
     } catch (err) {
-      console.error(err);
-      setError(err.message || "Signup failed");
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -41,9 +36,9 @@ export default function Signup() {
     <div className="max-w-md mx-auto mt-20 p-6 bg-white rounded-xl shadow">
       <h1 className="text-2xl font-bold mb-4">Sign Up</h1>
       {error && <div className="text-red-500 mb-3">{error}</div>}
-      <form className="space-y-3" onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="space-y-3">
         <div>
-          <label className="block text-sm font-medium mb-1">Email</label>
+          <label>Email</label>
           <input
             type="email"
             required
@@ -53,7 +48,7 @@ export default function Signup() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">Password</label>
+          <label>Password</label>
           <input
             type="password"
             required
@@ -70,8 +65,8 @@ export default function Signup() {
           {loading ? "Signing up..." : "Sign Up"}
         </button>
       </form>
-      <div className="mt-4 text-sm flex justify-between">
-        <Link to="/login" className="text-orange-500 hover:underline">Login</Link>
+      <div className="mt-4 text-sm">
+        <Link to="/login" className="text-orange-500 hover:underline">Already have an account? Login</Link>
       </div>
     </div>
   );
