@@ -1,4 +1,3 @@
-// vite.config.js
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
@@ -8,10 +7,12 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          vendor: ["react", "react-dom"], // put major dependencies into vendor.js
+          vendor: ["react", "react-dom"], // separate major dependencies
         },
       },
     },
-    chunkSizeWarningLimit: 1000, // optional: raise warning limit to 1MB
+    chunkSizeWarningLimit: 1000, // optional
   },
+  // Make sure the app works when deployed in a subdirectory
+  base: "/",
 });
