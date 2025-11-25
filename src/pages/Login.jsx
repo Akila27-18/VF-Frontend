@@ -21,14 +21,21 @@ export default function Login() {
     try {
       const data = await apiFetch("/auth/login/", {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
 
-      // backend returns { access, refresh, email }
+      // Check for backend error
+      if (data.error) {
+        setError(data.error);
+        return;
+      }
+
+      // Login via AuthContext
       login(data.access, data.refresh, { email: data.email || email });
       navigate("/dashboard");
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "Login failed");
     } finally {
       setLoading(false);
     }

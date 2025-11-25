@@ -8,13 +8,15 @@ export default function AuthProvider({ children }) {
   const [refreshToken, setRefreshToken] = useState(null);
   const [user, setUser] = useState(null);
 
+  // Load tokens/user from localStorage on mount
   useEffect(() => {
-    const a = localStorage.getItem("accessToken");
-    const r = localStorage.getItem("refreshToken");
-    const u = localStorage.getItem("user");
-    setAccessToken(a ?? null);
-    setRefreshToken(r ?? null);
-    setUser(u ? JSON.parse(u) : null);
+    const storedAccess = localStorage.getItem("accessToken");
+    const storedRefresh = localStorage.getItem("refreshToken");
+    const storedUser = localStorage.getItem("user");
+
+    setAccessToken(storedAccess ?? null);
+    setRefreshToken(storedRefresh ?? null);
+    setUser(storedUser ? JSON.parse(storedUser) : null);
   }, []);
 
   const login = (access, refresh, userObj = null) => {
@@ -44,7 +46,9 @@ export default function AuthProvider({ children }) {
   const isAuthenticated = !!accessToken;
 
   return (
-    <AuthContext.Provider value={{ accessToken, refreshToken, user, login, logout, isAuthenticated }}>
+    <AuthContext.Provider
+      value={{ accessToken, refreshToken, user, login, logout, isAuthenticated }}
+    >
       {children}
     </AuthContext.Provider>
   );

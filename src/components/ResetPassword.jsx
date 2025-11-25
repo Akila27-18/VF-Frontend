@@ -8,16 +8,21 @@ export default function ResetPassword() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  const submit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
     setMessage("");
+
     try {
-      const res = await apiFetch("/auth/password-reset/", { method: "POST", body: JSON.stringify({ email }) });
-      setMessage(res.message || "Password reset link sent.");
+      const res = await apiFetch("/auth/password-reset/", {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      });
+
+      setMessage(res.message || "Password reset link sent. Check your inbox.");
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "Failed to send reset link.");
     } finally {
       setLoading(false);
     }
@@ -26,11 +31,26 @@ export default function ResetPassword() {
   return (
     <div className="max-w-md mx-auto mt-20 p-6 bg-white rounded-xl shadow">
       <h1 className="text-2xl font-bold mb-4">Reset Password</h1>
+
       {error && <div className="text-red-500 mb-3">{error}</div>}
       {message && <div className="text-green-600 mb-3">{message}</div>}
-      <form onSubmit={submit} className="space-y-3">
-        <input type="email" placeholder="Your email" value={email} onChange={(e) => setEmail(e.target.value)} required className="w-full border p-2 rounded" />
-        <button className="w-full bg-orange-500 text-white py-2 rounded" disabled={loading}>{loading ? "Sending..." : "Send Reset Link"}</button>
+
+      <form onSubmit={handleSubmit} className="space-y-3">
+        <input
+          type="email"
+          placeholder="Your email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          className="w-full border p-2 rounded"
+        />
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-orange-500 text-white py-2 rounded hover:bg-orange-600"
+        >
+          {loading ? "Sending..." : "Send Reset Link"}
+        </button>
       </form>
     </div>
   );

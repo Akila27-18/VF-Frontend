@@ -18,7 +18,9 @@ export default function SafeAside({ wsUrl, stockSymbols = [] }) {
     if (!messages || messages.length === 0) return;
 
     const latest = messages[messages.length - 1];
-    if (latest.symbol && latest.price) {
+
+    // Expecting stock message format: { symbol, price, change }
+    if (latest.symbol && latest.price != null) {
       setStocks((prev) =>
         prev.map((s) =>
           s.symbol === latest.symbol
@@ -70,11 +72,9 @@ export default function SafeAside({ wsUrl, stockSymbols = [] }) {
               <span>{s.symbol}</span>
               <span>
                 {s.price !== null ? `₹${s.price.toFixed(2)}` : "Loading..."}{" "}
-                {s.change !== null && (
+                {s.change != null && (
                   <span
-                    className={`ml-1 ${
-                      s.change >= 0 ? "text-green-600" : "text-red-600"
-                    }`}
+                    className={`ml-1 ${s.change >= 0 ? "text-green-600" : "text-red-600"}`}
                   >
                     ({s.change >= 0 ? "+" : ""}
                     {s.change.toFixed(2)})

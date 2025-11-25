@@ -1,11 +1,11 @@
 // src/lib/api.js
-const raw = import.meta.env.VITE_BACKEND_URL || "https://vf-backend-1.onrender.com";
-export const API_URL = raw.replace(/\/$/, ""); // no trailing slash
+const raw = import.meta.env.VITE_BACKEND_URL || "http://localhost:8000";
+export const API_URL = raw.replace(/\/$/, ""); // remove trailing slash
 
 export async function apiFetch(endpoint, options = {}) {
   const accessToken = localStorage.getItem("accessToken");
 
-  // endpoints that should NOT include Authorization header
+  // endpoints that do not require Authorization
   const noAuthEndpoints = [
     "/auth/login/",
     "/auth/signup/",
@@ -21,7 +21,8 @@ export async function apiFetch(endpoint, options = {}) {
     ...(options.headers || {})
   };
 
-  const url = `${API_URL}${endpoint.endsWith('/') ? endpoint : endpoint + '/'}`;
+  // Ensure endpoint ends with slash
+  const url = `${API_URL}${endpoint.endsWith("/") ? endpoint : endpoint + "/"}`;
 
   const res = await fetch(url, {
     ...options,
@@ -37,13 +38,13 @@ export async function apiFetch(endpoint, options = {}) {
   }
 
   if (!res.ok) {
-    const err =
+    const errMsg =
       data?.detail ||
       data?.error ||
       data?.message ||
       res.statusText ||
       "API request failed";
-    throw new Error(err);
+    throw new Error(errMsg);
   }
 
   return data;

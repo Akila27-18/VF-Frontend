@@ -1,10 +1,12 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useWebSocket } from "../hooks/useWebSocket";
 import { apiFetch } from "../lib/api";
 
 export default function ChatPanel({ wsUrl, user = "You" }) {
   const scroller = useRef(null);
   const typingTimeouts = useRef({});
+  const typingDebounce = useRef(null);
+
   const { messages: rawMessages, sendMessage, connected } = useWebSocket(wsUrl);
 
   const [messages, setMessages] = useState([]);
@@ -12,16 +14,29 @@ export default function ChatPanel({ wsUrl, user = "You" }) {
   const [typingUsers, setTypingUsers] = useState([]);
   const [loadingOlder, setLoadingOlder] = useState(false);
 
+  // ----------------------------- Normalize incoming messages -----------------------------
+  const normalizeMessage = (msg) => ({
+    ...msg,
+    from_user: msg.from_user || msg.from || "Anonymous",
+    created_at: msg.created_at || msg.createdAt || new Date().toISOString(),
+    time:
+      msg.time ||
+      new Date(msg.created_at || Date.now()).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+  });
+
   // ----------------------------- Load older messages -----------------------------
   const loadOlderMessages = async () => {
     if (loadingOlder) return;
-
     setLoadingOlder(true);
+
     const oldest = messages[0]?.created_at || new Date().toISOString();
 
     try {
       const older = await apiFetch(`/chat/messages/?before=${oldest}&limit=20`);
-      setMessages((prev) => [...older, ...prev]);
+      setMessages((prev) => [...older.map(normalizeMessage), ...prev]);
     } catch (err) {
       console.error("Failed to load older messages:", err);
     } finally {
@@ -44,54 +59,59 @@ export default function ChatPanel({ wsUrl, user = "You" }) {
   useEffect(() => {
     if (!rawMessages) return;
 
-    rawMessages.forEach((msg) => {
-      if (!msg?.type) return;
+    setMessages((prev) => {
+      const ids = new Set(prev.map((m) => m.id));
+      const newMessages = [];
 
-      // Chat message
-      if (msg.type === "chat" && msg.payload?.id) {
-        setMessages((prev) =>
-          prev.some((m) => m.id === msg.payload.id)
-            ? prev
-            : [...prev, {
-                ...msg.payload,
-                from: msg.payload.from_user || msg.payload.from || "Anonymous",
-                created_at: msg.payload.createdAt || msg.payload.created_at || new Date().toISOString()
-              }]
-        );
-      }
+      rawMessages.forEach((msg) => {
+        if (!msg?.type) return;
 
-      // Typing indicator
-      if (msg.type === "typing") {
-        const from = msg.payload?.from;
-        if (!from || from === user) return;
+        if (msg.type === "chat" && msg.payload?.id && !ids.has(msg.payload.id)) {
+          newMessages.push(normalizeMessage(msg.payload));
+        }
 
-        setTypingUsers((prev) => (prev.includes(from) ? prev : [...prev, from]));
+        if (msg.type === "typing") {
+          const from = msg.payload?.from;
+          if (!from || from === user) return;
 
-        if (typingTimeouts.current[from]) clearTimeout(typingTimeouts.current[from]);
-        typingTimeouts.current[from] = setTimeout(() => {
-          setTypingUsers((prev) => prev.filter((x) => x !== from));
-        }, 1600);
-      }
+          setTypingUsers((prevTyping) =>
+            prevTyping.includes(from) ? prevTyping : [...prevTyping, from]
+          );
+
+          if (typingTimeouts.current[from]) clearTimeout(typingTimeouts.current[from]);
+          typingTimeouts.current[from] = setTimeout(() => {
+            setTypingUsers((prevTyping) => prevTyping.filter((x) => x !== from));
+          }, 1600);
+        }
+      });
+
+      return [...prev, ...newMessages];
     });
   }, [rawMessages, user]);
 
   // ----------------------------- Auto-scroll on new messages -----------------------------
   useEffect(() => {
-    if (!scroller.current) return;
-    requestAnimationFrame(() => {
-      scroller.current.scrollTop = scroller.current.scrollHeight;
-    });
+    const el = scroller.current;
+    if (!el) return;
+
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 40;
+    if (atBottom) {
+      requestAnimationFrame(() => {
+        el.scrollTop = el.scrollHeight;
+      });
+    }
   }, [messages, typingUsers]);
 
   // ----------------------------- Typing indicator -----------------------------
-  const typingTimeout = useRef(null);
-  const sendTyping = () => {
-    if (typingTimeout.current) return;
+  const sendTyping = useCallback(() => {
+    if (typingDebounce.current) clearTimeout(typingDebounce.current);
+
     sendMessage({ type: "typing", payload: { from: user } });
-    typingTimeout.current = setTimeout(() => {
-      typingTimeout.current = null;
+
+    typingDebounce.current = setTimeout(() => {
+      typingDebounce.current = null;
     }, 800);
-  };
+  }, [sendMessage, user]);
 
   // ----------------------------- Send message -----------------------------
   const handleSend = () => {
@@ -108,8 +128,7 @@ export default function ChatPanel({ wsUrl, user = "You" }) {
       },
     };
 
-    // Optimistic update
-    setMessages((prev) => [...prev, { ...msg.payload, created_at: new Date().toISOString() }]);
+    setMessages((prev) => [...prev, normalizeMessage(msg.payload)]);
     sendMessage(msg);
     setText("");
   };
@@ -134,12 +153,14 @@ export default function ChatPanel({ wsUrl, user = "You" }) {
           <div
             key={m.id}
             className={`max-w-[85%] p-2 rounded-lg ${
-              m.from_user === user ? "ml-auto bg-[#FF6A00] text-white" : "mr-auto bg-gray-100 text-gray-900"
+              m.from_user === user
+                ? "ml-auto bg-[#FF6A00] text-white"
+                : "mr-auto bg-gray-100 text-gray-900"
             }`}
           >
             <div className="text-sm break-words">{m.text}</div>
             <div className="text-[10px] opacity-70 mt-1">
-              {m.from_user} • {m.time || new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              {m.from_user} • {m.time}
             </div>
           </div>
         ))}
@@ -165,7 +186,8 @@ export default function ChatPanel({ wsUrl, user = "You" }) {
         />
         <button
           onClick={handleSend}
-          className="px-3 py-2 bg-[#FF6A00] text-white rounded hover:bg-orange-600"
+          disabled={!text.trim()}
+          className="px-3 py-2 bg-[#FF6A00] text-white rounded hover:bg-orange-600 disabled:opacity-50"
         >
           Send
         </button>

@@ -35,7 +35,7 @@ export default function Signup() {
       login(data.access, data.refresh, { email: data.email || email });
       navigate("/dashboard");
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "Failed to sign up. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -45,16 +45,45 @@ export default function Signup() {
     <div className="max-w-md mx-auto mt-20 p-6 bg-white rounded-xl shadow">
       <h1 className="text-2xl font-bold mb-4">Create Account</h1>
       {error && <div className="text-red-500 mb-3">{error}</div>}
+
       <form className="space-y-3" onSubmit={handleSubmit}>
-        <input className="w-full border p-2 rounded" type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        <input className="w-full border p-2 rounded" type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        <input className="w-full border p-2 rounded" type="password" placeholder="Confirm Password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
-        <button className="w-full bg-orange-500 text-white py-2 rounded" type="submit" disabled={loading}>
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          className="w-full border p-2 rounded"
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          className="w-full border p-2 rounded"
+        />
+        <input
+          type="password"
+          placeholder="Confirm Password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          required
+          className="w-full border p-2 rounded"
+        />
+        <button
+          type="submit"
+          className="w-full bg-orange-500 text-white py-2 rounded hover:bg-orange-600"
+          disabled={loading}
+        >
           {loading ? "Creating..." : "Sign Up"}
         </button>
       </form>
+
       <div className="mt-4 text-center">
-        <Link to="/login" className="text-orange-500 hover:underline">Already have an account? Log in</Link>
+        <Link to="/login" className="text-orange-500 hover:underline">
+          Already have an account? Log in
+        </Link>
       </div>
     </div>
   );
