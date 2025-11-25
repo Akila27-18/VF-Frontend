@@ -14,7 +14,8 @@ export default function AddExpenseModal({ open, onClose, onAdd }) {
   const handleSubmit = async () => {
     setError("");
     const amt = parseFloat(amount);
-    if (!title.trim() || !amt || amt <= 0) {
+
+    if (!title.trim() || isNaN(amt) || amt <= 0) {
       setError("Please enter a valid title and amount.");
       return;
     }
@@ -31,21 +32,23 @@ export default function AddExpenseModal({ open, onClose, onAdd }) {
         }),
       });
 
-      onAdd(newExpense); // update dashboard
-      onClose();
+      onAdd?.(newExpense);
+      onClose?.();
 
-      // Clear inputs
       setTitle("");
       setAmount("");
       setCategory("");
       setError("");
     } catch (err) {
-      console.error(err);
-      setError("Failed to add expense.");
+      console.error("AddExpenseModal API error:", err);
+      setError(err.message || "Failed to add expense.");
     } finally {
       setLoading(false);
     }
   };
+
+  const isSubmitDisabled =
+    loading || !title.trim() || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
@@ -87,8 +90,12 @@ export default function AddExpenseModal({ open, onClose, onAdd }) {
           </button>
           <button
             onClick={handleSubmit}
-            disabled={loading}
-            className="px-4 py-2 rounded bg-orange-600 text-white hover:bg-orange-700"
+            disabled={isSubmitDisabled}
+            className={`px-4 py-2 rounded text-white ${
+              isSubmitDisabled
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-orange-600 hover:bg-orange-700"
+            }`}
           >
             {loading ? "Adding..." : "Add Expense"}
           </button>

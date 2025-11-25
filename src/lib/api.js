@@ -1,11 +1,10 @@
 // src/lib/api.js
-const raw = import.meta.env.VITE_BACKEND_URL || "http://localhost:8000";
+const raw = import.meta.env.VITE_BACKEND_URL || "https://vf-backend-1.onrender.com";
 export const API_URL = raw.replace(/\/$/, ""); // remove trailing slash
 
 export async function apiFetch(endpoint, options = {}) {
   const accessToken = localStorage.getItem("accessToken");
 
-  // endpoints that do not require Authorization
   const noAuthEndpoints = [
     "/auth/login/",
     "/auth/signup/",
@@ -21,29 +20,30 @@ export async function apiFetch(endpoint, options = {}) {
     ...(options.headers || {})
   };
 
-  // Ensure endpoint ends with slash
   const url = `${API_URL}${endpoint.endsWith("/") ? endpoint : endpoint + "/"}`;
 
-  const res = await fetch(url, {
-    ...options,
-    headers,
-  });
+  let res;
+  try {
+    res = await fetch(url, { ...options, headers });
+  } catch (networkErr) {
+    throw new Error("Network error: " + networkErr.message);
+  }
 
   const contentType = res.headers.get("content-type");
-  let data;
-  if (contentType && contentType.includes("application/json")) {
-    data = await res.json();
-  } else {
-    data = await res.text();
+  let data = null;
+
+  try {
+    if (res.status !== 204 && contentType?.includes("application/json")) {
+      data = await res.json();
+    } else if (res.status !== 204) {
+      data = await res.text();
+    }
+  } catch {
+    data = null;
   }
 
   if (!res.ok) {
-    const errMsg =
-      data?.detail ||
-      data?.error ||
-      data?.message ||
-      res.statusText ||
-      "API request failed";
+    const errMsg = data?.detail || data?.error || data?.message || res.statusText || "API request failed";
     throw new Error(errMsg);
   }
 
