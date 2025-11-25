@@ -16,7 +16,6 @@ import ResetPassword from "./components/ResetPassword";
 import LearnMore from "./components/LearnMore";
 import GetStarted from "./components/GetStarted";
 
-
 /* Protected Pages */
 import Insights from "./pages/Insights";
 import Payments from "./pages/Payments";
@@ -32,14 +31,21 @@ const pageTransition = {
   transition: { duration: 0.25 },
 };
 
+/* Wrapper for motion animation */
+const PageWrapper = ({ children }) => (
+  <motion.div {...pageTransition}>{children}</motion.div>
+);
+
 export default function App() {
   const location = useLocation();
+
   const hiddenRoutes = [
     "/login",
     "/signup",
     "/forgot-password",
     "/password-reset-confirm/:uid/:token",
   ];
+
   const shouldHideHeader = hiddenRoutes.some((path) =>
     location.pathname.startsWith(path.replace(/:\w+/g, ""))
   );
@@ -53,77 +59,32 @@ export default function App() {
           <Routes location={location} key={location.pathname}>
 
             {/* PUBLIC ROUTES */}
-            <Route
-              path="/"
-              element={<motion.div {...pageTransition}><Landing /></motion.div>}
-            />
-            <Route
-              path="/signup"
-              element={<motion.div {...pageTransition}><Signup /></motion.div>}
-            />
-            <Route
-              path="/login"
-              element={<motion.div {...pageTransition}><Login /></motion.div>}
-            />
-            <Route
-              path="/forgot-password"
-              element={<motion.div {...pageTransition}><ForgotPassword /></motion.div>}
-            />
-            <Route
-              path="/password-reset-confirm/:uid/:token"
-              element={<motion.div {...pageTransition}><ResetPassword /></motion.div>}
-            />
-            <Route
-              path="/learn-more"
-              element={<motion.div {...pageTransition}><LearnMore /></motion.div>}
-            />
-            <Route
-              path="/get-started"
-              element={<motion.div {...pageTransition}><GetStarted /></motion.div>}
-            />
+            <Route path="/" element={<PageWrapper><Landing /></PageWrapper>} />
+            <Route path="/signup" element={<PageWrapper><Signup /></PageWrapper>} />
+            <Route path="/login" element={<PageWrapper><Login /></PageWrapper>} />
+            <Route path="/forgot-password" element={<PageWrapper><ForgotPassword /></PageWrapper>} />
+            <Route path="/password-reset-confirm/:uid/:token" element={<PageWrapper><ResetPassword /></PageWrapper>} />
+            <Route path="/learn-more" element={<PageWrapper><LearnMore /></PageWrapper>} />
+            <Route path="/get-started" element={<PageWrapper><GetStarted /></PageWrapper>} />
 
             {/* PROTECTED ROUTES */}
             <Route
               path="/dashboard"
-              element={
-                <motion.div {...pageTransition}>
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                </motion.div>
-              }
+              element={<PageWrapper><ProtectedRoute><Dashboard /></ProtectedRoute></PageWrapper>}
             />
             <Route
               path="/dashboard/insights"
-              element={
-                <motion.div {...pageTransition}>
-                  <ProtectedRoute>
-                    <Insights />
-                  </ProtectedRoute>
-                </motion.div>
-              }
+              element={<PageWrapper><ProtectedRoute><Insights /></ProtectedRoute></PageWrapper>}
             />
             <Route
               path="/dashboard/payments"
-              element={
-                <motion.div {...pageTransition}>
-                  <ProtectedRoute>
-                    <Payments />
-                  </ProtectedRoute>
-                </motion.div>
-              }
+              element={<PageWrapper><ProtectedRoute><Payments /></ProtectedRoute></PageWrapper>}
             />
 
             {/* OPTIONAL RESOURCE PAGE */}
             <Route
               path="/resources/:slug"
-              element={
-                <motion.div {...pageTransition}>
-                  <ProtectedRoute>
-                    <ResourcePage />
-                  </ProtectedRoute>
-                </motion.div>
-              }
+              element={<PageWrapper><ProtectedRoute><ResourcePage /></ProtectedRoute></PageWrapper>}
             />
 
           </Routes>

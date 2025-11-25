@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useWebSocket } from "../hooks/useWebSocket";
 import { apiFetch } from "../lib/api";
 
-export default function ChatPanel({ wsUrl, user = "You" }) {
+export default function ChatPanel({ wsUrl, user = "You", receiverId }) {
   const scroller = useRef(null);
   const typingTimeouts = useRef({});
   const typingDebounce = useRef(null);
@@ -66,12 +66,14 @@ export default function ChatPanel({ wsUrl, user = "You" }) {
       rawMessages.forEach((msg) => {
         if (!msg?.type) return;
 
-        if (msg.type === "chat" && msg.payload?.id && !ids.has(msg.payload.id)) {
-          newMessages.push(normalizeMessage(msg.payload));
+        // Chat message from backend
+        if (msg.type === "message" && msg.data?.id && !ids.has(msg.data.id)) {
+          newMessages.push(normalizeMessage(msg.data));
         }
 
+        // Typing indicator
         if (msg.type === "typing") {
-          const from = msg.payload?.from;
+          const from = msg.data?.from; // backend uses "data"
           if (!from || from === user) return;
 
           setTypingUsers((prevTyping) =>
@@ -106,29 +108,38 @@ export default function ChatPanel({ wsUrl, user = "You" }) {
   const sendTyping = useCallback(() => {
     if (typingDebounce.current) clearTimeout(typingDebounce.current);
 
-    sendMessage({ type: "typing", payload: { from: user } });
+    // Backend uses self.scope.user.username, no need for from field
+    sendMessage({ type: "typing" });
 
     typingDebounce.current = setTimeout(() => {
       typingDebounce.current = null;
     }, 800);
-  }, [sendMessage, user]);
+  }, [sendMessage]);
 
   // ----------------------------- Send message -----------------------------
   const handleSend = () => {
     const trimmed = text.trim();
-    if (!trimmed) return;
+    if (!trimmed || !receiverId) return;
 
     const msg = {
-      type: "chat",
+      type: "message", // must match backend
       payload: {
-        id: Date.now().toString(),
-        from_user: user,
         text: trimmed,
-        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        receiver_id: receiverId, // required by backend
       },
     };
 
-    setMessages((prev) => [...prev, normalizeMessage(msg.payload)]);
+    // Optimistic update
+    setMessages((prev) => [
+      ...prev,
+      normalizeMessage({
+        id: Date.now().toString(),
+        from_user: user,
+        text: trimmed,
+        created_at: new Date().toISOString(),
+      }),
+    ]);
+
     sendMessage(msg);
     setText("");
   };

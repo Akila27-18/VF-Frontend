@@ -1,4 +1,4 @@
-// src/pages/Dashboard.jsx
+// src/components/Dashboard.jsx
 import React, { useEffect, useState, useContext } from "react";
 import DashboardHeader from "../components/dashboard/DashboardHeader";
 import QuickActions from "../components/dashboard/QuickActions";
@@ -6,9 +6,10 @@ import ExpenseCard from "../components/ExpenseCard";
 import AddExpenseModal from "../components/AddExpenseModal";
 import SplitBillModal from "../components/SplitBillModal";
 import SafeAside from "../components/SafeAside";
-import SummaryCard from "../components/dashboard/SummaryCard";
 import SmartInsights from "../components/dashboard/SmartInsights";
 import PieChartCard from "../components/dashboard/PieChartCard";
+import PieChart from "../components/dashboard/PieChart";
+
 import { apiFetch } from "../lib/api";
 import { AuthContext } from "../context/AuthContext";
 
@@ -34,7 +35,7 @@ export default function Dashboard() {
       try {
         const data = await apiFetch("/expenses/");
         setExpenses(data);
-        localStorage.setItem("expenses", JSON.stringify(data)); // persist
+        localStorage.setItem("expenses", JSON.stringify(data));
       } catch (err) {
         console.error(err);
         if (err.message.toLowerCase().includes("token")) logout();
@@ -48,7 +49,6 @@ export default function Dashboard() {
   // ------------------ Add Expense ------------------
   const handleAddExpense = async (expense) => {
     try {
-      // POST to backend
       const saved = await apiFetch("/expenses/", {
         method: "POST",
         body: JSON.stringify(expense),
@@ -60,6 +60,25 @@ export default function Dashboard() {
     } catch (err) {
       console.error("Add expense failed:", err);
       throw err;
+    }
+  };
+
+  // ------------------ Edit Expense ------------------
+  const handleEditExpense = async (updated) => {
+    try {
+      const saved = await apiFetch(`/expenses/${updated.id}/`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          title: updated.title,
+          amount: updated.amount,
+          category: updated.category,
+        }),
+      });
+      const newExpenses = expenses.map((e) => (e.id === saved.id ? saved : e));
+      setExpenses(newExpenses);
+      localStorage.setItem("expenses", JSON.stringify(newExpenses));
+    } catch (err) {
+      console.error("Edit expense failed:", err);
     }
   };
 
@@ -90,8 +109,14 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6 px-4 md:px-8 min-h-screen bg-orange-50">
-      <DashboardHeader title="Welcome back" subtitle="Overview of your finances." image={heroImg} />
+      {/* Header */}
+      <DashboardHeader
+        title="Welcome back"
+        subtitle="Overview of your finances."
+        image={heroImg}
+      />
 
+      {/* Quick Action Buttons */}
       <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <QuickActions img={addExpenseImg} title="Add Expense" onClick={() => setShowAdd(true)} />
         <QuickActions img={insightsImg} title="Insights" />
@@ -99,21 +124,29 @@ export default function Dashboard() {
         <QuickActions img={splitBillImg} title="Split Bill" onClick={() => setShowSplit(true)} />
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6">
-        <SummaryCard expenses={expenses} />
-        <SmartInsights expenses={expenses} />
-      </div>
-
+      {/* Main Insights and Summary */}
       <div className="grid lg:grid-cols-3 gap-6">
+        {/* Left column: SmartInsights, Expense list, PieChartCard */}
         <div className="lg:col-span-2 space-y-6">
+          <SmartInsights expenses={expenses} />
+
+          {/* Expenses List */}
           {loading && <div className="text-center py-6">Loading...</div>}
           {!loading && expenses.length === 0 && <div>No expenses yet</div>}
           {expenses.map((e) => (
-            <ExpenseCard key={e.id} expense={e} onDelete={handleDeleteExpense} />
+            <ExpenseCard
+              key={e.id}
+              expense={e}
+              onDelete={handleDeleteExpense}
+              onEdit={handleEditExpense}
+            />
           ))}
+
+          {/* Category Pie Chart */}
           <PieChartCard data={pieData} />
         </div>
 
+        {/* Right column: SafeAside (stocks + news) */}
         <div className="order-first lg:order-last">
           <SafeAside
             wsUrl={`${import.meta.env.VITE_BACKEND_URL.replace(/^http/, "ws")}/ws/dashboard/`}
@@ -122,8 +155,14 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Modals */}
       <AddExpenseModal open={showAdd} onClose={() => setShowAdd(false)} onAdd={handleAddExpense} />
-      <SplitBillModal open={showSplit} onClose={() => setShowSplit(false)} users={dashboardUsers} onAdd={(newExpenses) => setExpenses([...newExpenses, ...expenses])} />
+      <SplitBillModal
+        open={showSplit}
+        onClose={() => setShowSplit(false)}
+        users={dashboardUsers}
+        onAdd={(newExpenses) => setExpenses([...newExpenses, ...expenses])}
+      />
     </div>
   );
 }

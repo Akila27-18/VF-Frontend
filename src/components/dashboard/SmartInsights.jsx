@@ -1,6 +1,11 @@
+// src/components/dashboard/SmartInsights.jsx
 import React, { useMemo } from "react";
+import SummaryCard from "./SummaryCard";
+import WeeklyTrend from "./WeeklyTrend";
+import Timeline from "./Timeline";
 
-export default function SmartInsights({ expenses = [], largeExpenseThreshold = 0.4 }) {
+export default function SmartInsights({ expenses = [] }) {
+  // ---------- Prepare Smart Insights ----------
   const insights = useMemo(() => {
     if (!expenses || expenses.length === 0) 
       return ["No expenses yet — add your first transaction."];
@@ -40,7 +45,7 @@ export default function SmartInsights({ expenses = [], largeExpenseThreshold = 0
 
     // Large expense detection
     const biggest = [...expenses].sort((a, b) => Number(b.amount || 0) - Number(a.amount || 0))[0];
-    if (biggest && thisMonthTotal > 0 && Number(biggest.amount) > thisMonthTotal * largeExpenseThreshold) {
+    if (biggest && thisMonthTotal > 0 && Number(biggest.amount) > thisMonthTotal * 0.4) {
       lines.push(`⚠ Large one-time expense: ₹${Number(biggest.amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })} (may skew this month's total).`);
     }
 
@@ -49,17 +54,62 @@ export default function SmartInsights({ expenses = [], largeExpenseThreshold = 0
     lines.push("💡 Tip: Click 'Split Bill' to split shared expenses.");
 
     return lines;
-  }, [expenses, largeExpenseThreshold]);
+  }, [expenses]);
+
+  // ---------- Prepare Weekly Data ----------
+  const weeklyData = useMemo(() => {
+    const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const today = new Date();
+    const weekly = weekDays.map((d) => ({ day: d, spend: 0 }));
+
+    expenses.forEach((e) => {
+      if (!e.date) return;
+      const d = new Date(e.date);
+      const diff = (today - d) / (1000 * 60 * 60 * 24);
+      if (diff >= 0 && diff < 7) weekly[d.getDay()].spend += Number(e.amount || 0);
+    });
+
+    weekly.forEach((w) => (w.spend = Number(w.spend.toFixed(2))));
+    return weekly;
+  }, [expenses]);
+
+  // ---------- Prepare Timeline Data ----------
+  const timelineEvents = useMemo(() => {
+    return [...expenses]
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .slice(0, 5)
+      .map((e) => ({
+        title: `${e.title} - ₹${Number(e.amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`,
+        time: new Date(e.date).toLocaleString(),
+      }));
+  }, [expenses]);
 
   return (
-    <div className="bg-white shadow rounded-xl p-4">
-      <h3 className="text-lg font-semibold mb-3">Smart Insights</h3>
-      <div className="space-y-2">
-        {insights.map((t, i) => (
-          <div key={i} className={`p-2 rounded text-sm ${t.startsWith("⚠") ? "bg-red-50 text-red-600" : "bg-gray-50 text-gray-700"}`}>
-            {t}
-          </div>
-        ))}
+    <div className="space-y-6">
+      {/* Summary */}
+      <SummaryCard expenses={expenses} />
+
+      {/* Weekly Trend */}
+      <WeeklyTrend data={weeklyData} />
+
+      {/* Timeline */}
+      <Timeline events={timelineEvents} />
+
+      {/* Smart AI Insights */}
+      <div className="bg-white shadow rounded-xl p-4">
+        <h3 className="text-lg font-semibold mb-3">Smart Insights</h3>
+        <div className="space-y-2">
+          {insights.map((t, i) => (
+            <div
+              key={i}
+              className={`p-2 rounded text-sm ${
+                t.startsWith("⚠") ? "bg-red-50 text-red-600" : "bg-gray-50 text-gray-700"
+              }`}
+            >
+              {t}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

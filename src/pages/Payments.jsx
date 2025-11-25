@@ -5,10 +5,28 @@ import { AuthContext } from "../context/AuthContext";
 export default function Payments() {
   const { token, logout } = useContext(AuthContext);
   const [sharedBudgets, setSharedBudgets] = useState([]);
+  const [userMap, setUserMap] = useState({}); // id → username
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Fetch shared budgets on mount
+  // Fetch all users once to map IDs → usernames
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const users = await apiFetch("/users/");
+        const map = {};
+        users.forEach((u) => {
+          map[u.id] = u.username;
+        });
+        setUserMap(map);
+      } catch (err) {
+        console.error("Failed to fetch users:", err);
+      }
+    };
+    fetchUsers();
+  }, []);
+
+  // Fetch shared budgets
   useEffect(() => {
     if (!token) return;
 
@@ -33,8 +51,9 @@ export default function Payments() {
     if (!budget.participants || budget.participants.length === 0) return [];
 
     const splitAmount = budget.total_amount / budget.participants.length;
-    return budget.participants.map((p) => ({
-      participant: p,
+    return budget.participants.map((participantId) => ({
+      participantId,
+      username: userMap[participantId] || `User ${participantId}`,
       owes: splitAmount.toFixed(2),
     }));
   };
@@ -57,11 +76,8 @@ export default function Payments() {
             </p>
             <div className="divide-y">
               {calculateOwed(budget).map((p, idx) => (
-                <div
-                  key={idx}
-                  className="flex justify-between items-center py-2 text-gray-700"
-                >
-                  <span>{p.participant.username}</span>
+                <div key={idx} className="flex justify-between items-center py-2 text-gray-700">
+                  <span>{p.username}</span>
                   <span className="font-semibold">₹{p.owes}</span>
                 </div>
               ))}
