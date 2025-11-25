@@ -31,20 +31,42 @@ export default function ExpenseList() {
     return () => clearInterval(interval);
   }, [accessToken]);
 
-  const filtered = filter === "All" ? list : list.filter((e) => e.category === filter);
+  const filtered =
+    filter === "All" ? list : list.filter((e) => e.category === filter);
 
+  // -------------------------
+  // SAFE UPDATE (PATCH)
+  // -------------------------
   const handleEdit = async (exp) => {
     try {
-      await apiFetch(`/expenses/${exp.id}/`, { method: "PUT", body: JSON.stringify(exp) });
+      const payload = {
+        title: exp.title,
+        amount: Number(exp.amount),
+        category: exp.category,
+        shared: exp.shared ?? false,
+      };
+
+      await apiFetch(`/expenses/${exp.id}/`, {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      });
+
       load();
     } catch (err) {
       console.error("Edit failed", err);
     }
   };
 
+  // -------------------------
+  // SAFE DELETE (NO JSON PARSE)
+  // -------------------------
   const handleDelete = async (id) => {
     try {
-      await apiFetch(`/expenses/${id}/`, { method: "DELETE" });
+      await apiFetch(`/expenses/${id}/`, {
+        method: "DELETE",
+        noJson: true, // IMPORTANT FIX
+      });
+
       load();
     } catch (err) {
       console.error("Delete failed", err);
@@ -53,15 +75,28 @@ export default function ExpenseList() {
 
   return (
     <div className="space-y-4">
-      <select value={filter} onChange={(e) => setFilter(e.target.value)} className="border rounded p-2">
-        {categories.map((c) => (<option key={c}>{c}</option>))}
+      <select
+        value={filter}
+        onChange={(e) => setFilter(e.target.value)}
+        className="border rounded p-2"
+      >
+        {categories.map((c) => (
+          <option key={c}>{c}</option>
+        ))}
       </select>
 
       {filtered.map((exp) => (
-        <ExpenseCard key={exp.id} expense={exp} onEdit={handleEdit} onDelete={handleDelete} />
+        <ExpenseCard
+          key={exp.id}
+          expense={exp}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
       ))}
 
-      {filtered.length === 0 && <p className="text-gray-500">No expenses found.</p>}
+      {filtered.length === 0 && (
+        <p className="text-gray-500">No expenses found.</p>
+      )}
     </div>
   );
 }

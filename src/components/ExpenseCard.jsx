@@ -18,7 +18,7 @@ export default function ExpenseCard({ expense, onEdit, onDelete }) {
     const cat = category.trim() || "Other";
     const t = title.trim();
 
-    if (!t || amt <= 0) return;
+    if (!t || amt <= 0 || isNaN(amt)) return;
 
     onEdit({
       ...expense,
@@ -26,6 +26,7 @@ export default function ExpenseCard({ expense, onEdit, onDelete }) {
       amount: amt,
       category: cat,
     });
+
     setIsEditing(false);
   };
 
@@ -40,12 +41,14 @@ export default function ExpenseCard({ expense, onEdit, onDelete }) {
               onChange={(e) => setTitle(e.target.value)}
               className="border rounded p-1 text-sm"
             />
+
             <input
               type="number"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onChange={(e) => setAmount(Number(e.target.value))}
               className="border rounded p-1 text-sm"
             />
+
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
@@ -63,11 +66,18 @@ export default function ExpenseCard({ expense, onEdit, onDelete }) {
           <div>
             <div className="font-medium">{expense.title}</div>
             <div className="text-sm text-gray-500">{expense.category}</div>
+
             <div className="font-semibold">
-              ₹{Number(expense.amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+              ₹
+              {Number(expense.amount ?? 0).toLocaleString("en-IN", {
+                minimumFractionDigits: 2,
+              })}
             </div>
+
             <div className="text-xs text-gray-400">
-              {new Date(expense.created_at).toLocaleString()}
+              {expense.created_at
+                ? new Date(expense.created_at).toLocaleString()
+                : "No date"}
             </div>
           </div>
         )}
@@ -92,6 +102,7 @@ export default function ExpenseCard({ expense, onEdit, onDelete }) {
             >
               ✍️
             </button>
+
             <button
               onClick={() => onDelete(expense.id)}
               aria-label="Delete Expense"

@@ -13,8 +13,8 @@ export default function AddExpenseModal({ open, onClose, onAdd }) {
 
   const handleSubmit = async () => {
     setError("");
-    const amt = parseFloat(amount);
 
+    const amt = Number(amount);
     if (!title.trim() || isNaN(amt) || amt <= 0) {
       setError("Please enter a valid title and amount.");
       return;
@@ -26,7 +26,7 @@ export default function AddExpenseModal({ open, onClose, onAdd }) {
         method: "POST",
         body: JSON.stringify({
           title: title.trim(),
-          amount: amt,
+          amount: amt, // ensure number
           category: category.trim() || "Other",
           shared: false,
         }),
@@ -35,6 +35,7 @@ export default function AddExpenseModal({ open, onClose, onAdd }) {
       onAdd?.(newExpense);
       onClose?.();
 
+      // reset form
       setTitle("");
       setAmount("");
       setCategory("");
@@ -48,7 +49,7 @@ export default function AddExpenseModal({ open, onClose, onAdd }) {
   };
 
   const isSubmitDisabled =
-    loading || !title.trim() || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0;
+    loading || !title.trim() || isNaN(Number(amount)) || Number(amount) <= 0;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
@@ -88,6 +89,7 @@ export default function AddExpenseModal({ open, onClose, onAdd }) {
           >
             Cancel
           </button>
+
           <button
             onClick={handleSubmit}
             disabled={isSubmitDisabled}
