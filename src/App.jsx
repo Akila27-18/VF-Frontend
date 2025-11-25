@@ -73,17 +73,17 @@ export default function App() {
               element={<PageWrapper><ProtectedRoute><Dashboard /></ProtectedRoute></PageWrapper>}
             />
             <Route
-              path="/dashboard/insights"
+              path="/pages/insights"
               element={<PageWrapper><ProtectedRoute><Insights /></ProtectedRoute></PageWrapper>}
             />
             <Route
-              path="/dashboard/payments"
+              path="/pages/payments"
               element={<PageWrapper><ProtectedRoute><Payments /></ProtectedRoute></PageWrapper>}
             />
 
             {/* OPTIONAL RESOURCE PAGE */}
             <Route
-              path="/resources/:slug"
+              path="/pages/resources/:slug"
               element={<PageWrapper><ProtectedRoute><ResourcePage /></ProtectedRoute></PageWrapper>}
             />
 
