@@ -11,7 +11,12 @@ export default function ExpenseList() {
   const [list, setList] = useState([]);
   const [filter, setFilter] = useState("All");
 
+  // -------------------------
+  // Fetch all expenses
+  // -------------------------
   const load = async () => {
+    if (!accessToken) return;
+
     try {
       const data = await apiFetch("/expenses/");
       setList(Array.isArray(data) ? data : []);
@@ -25,17 +30,15 @@ export default function ExpenseList() {
   };
 
   useEffect(() => {
-    if (!accessToken) return;
     load();
-    const interval = setInterval(load, 10000);
+    const interval = setInterval(load, 10000); // refresh every 10s
     return () => clearInterval(interval);
   }, [accessToken]);
 
-  const filtered =
-    filter === "All" ? list : list.filter((e) => e.category === filter);
+  const filtered = filter === "All" ? list : list.filter((e) => e.category === filter);
 
   // -------------------------
-  // SAFE UPDATE (PATCH)
+  // Update expense
   // -------------------------
   const handleEdit = async (exp) => {
     try {
@@ -51,23 +54,23 @@ export default function ExpenseList() {
         body: JSON.stringify(payload),
       });
 
-      load();
+      load(); // refresh list
     } catch (err) {
       console.error("Edit failed", err);
     }
   };
 
   // -------------------------
-  // SAFE DELETE (NO JSON PARSE)
+  // Delete expense
   // -------------------------
   const handleDelete = async (id) => {
     try {
       await apiFetch(`/expenses/${id}/`, {
         method: "DELETE",
-        noJson: true, // IMPORTANT FIX
+        noJson: true, // prevent JSON parse errors
       });
 
-      load();
+      load(); // refresh list
     } catch (err) {
       console.error("Delete failed", err);
     }

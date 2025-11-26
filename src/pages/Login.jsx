@@ -21,18 +21,21 @@ export default function Login() {
     try {
       const data = await apiFetch("/auth/login/", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
 
-      // Check for backend error
-      if (data.error) {
+      // Backend returned an error
+      if (data?.error) {
         setError(data.error);
         return;
       }
 
-      // Login via AuthContext
-      login(data.access, data.refresh, { email: data.email || email });
+      // Save tokens and user info
+      login(data.access, data.refresh, {
+        email: data.email || email,
+        username: data.username ?? data.email,
+      });
+
       navigate("/dashboard");
     } catch (err) {
       setError(err.message || "Login failed");
@@ -45,6 +48,7 @@ export default function Login() {
     <div className="max-w-md mx-auto mt-20 p-6 bg-white rounded-xl shadow">
       <h1 className="text-2xl font-bold mb-4">Login</h1>
       {error && <div className="text-red-500 mb-3">{error}</div>}
+
       <form className="space-y-3" onSubmit={handleSubmit}>
         <input
           type="email"
@@ -54,6 +58,7 @@ export default function Login() {
           required
           className="w-full border p-2 rounded"
         />
+
         <input
           type="password"
           placeholder="Password"
@@ -62,6 +67,7 @@ export default function Login() {
           required
           className="w-full border p-2 rounded"
         />
+
         <button
           type="submit"
           className="w-full bg-orange-500 text-white py-2 rounded hover:bg-orange-600"
@@ -70,6 +76,7 @@ export default function Login() {
           {loading ? "Logging in..." : "Login"}
         </button>
       </form>
+
       <div className="mt-4 flex justify-between">
         <Link to="/signup" className="text-orange-500 hover:underline">
           Sign Up

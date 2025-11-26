@@ -6,14 +6,20 @@ import { AuthContext } from "../context/AuthContext";
 export default function ProtectedRoute({ children }) {
   const { accessToken, isAuthenticated } = useContext(AuthContext);
 
-  // while auth is undefined (not loaded yet), show loader
+  // Show loader while auth state is being determined
   if (accessToken === undefined) {
-    return <div className="text-center mt-20">Checking auth...</div>;
+    return (
+      <div className="text-center mt-20 text-gray-500">
+        Checking authentication...
+      </div>
+    );
   }
 
+  // Redirect if not authenticated
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
+  // Render protected content
   return children;
 }

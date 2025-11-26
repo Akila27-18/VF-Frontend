@@ -7,6 +7,7 @@ export default function ExpenseCard({ expense, onEdit, onDelete }) {
   const [amount, setAmount] = useState(expense.amount || 0);
   const [category, setCategory] = useState(expense.category || "Other");
 
+  // Update local state whenever the expense prop changes (important for WS updates)
   useEffect(() => {
     setTitle(expense.title || "");
     setAmount(expense.amount || 0);
@@ -86,10 +87,16 @@ export default function ExpenseCard({ expense, onEdit, onDelete }) {
       <div className="flex gap-2 items-start">
         {isEditing ? (
           <>
-            <button onClick={handleSave} className="text-green-600 text-xs font-medium">
+            <button
+              onClick={handleSave}
+              className="text-green-600 text-xs font-medium"
+            >
               Save
             </button>
-            <button onClick={() => setIsEditing(false)} className="text-gray-600 text-xs">
+            <button
+              onClick={() => setIsEditing(false)}
+              className="text-gray-600 text-xs"
+            >
               Cancel
             </button>
           </>

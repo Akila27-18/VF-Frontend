@@ -8,10 +8,10 @@ import SplitBillModal from "../components/SplitBillModal";
 import SafeAside from "../components/SafeAside";
 import SmartInsights from "../components/dashboard/SmartInsights";
 import PieChartCard from "../components/dashboard/PieChartCard";
-import PieChart from "../components/dashboard/PieChart";
 
 import { apiFetch } from "../lib/api";
 import { AuthContext } from "../context/AuthContext";
+import { WS_DASHBOARD } from "../lib/ws";
 
 import heroImg from "../assets/dashboard/hero.jpg";
 import addExpenseImg from "../assets/dashboard/add-expense.jpg";
@@ -29,7 +29,7 @@ export default function Dashboard() {
 
   const dashboardUsers = ["Alice", "Bob", "Charlie"];
 
-  // Fetch expenses on mount
+  // ------------------ Fetch Expenses ------------------
   useEffect(() => {
     async function fetchExpenses() {
       try {
@@ -53,7 +53,6 @@ export default function Dashboard() {
         method: "POST",
         body: JSON.stringify(expense),
       });
-
       const updated = [saved, ...expenses];
       setExpenses(updated);
       localStorage.setItem("expenses", JSON.stringify(updated));
@@ -94,13 +93,14 @@ export default function Dashboard() {
     }
   };
 
-  // Pie chart data
+  // ------------------ Pie Chart Data ------------------
   const pieData = {
     labels: [...new Set(expenses.map((e) => e.category || "Other"))],
     datasets: [
       {
         data: expenses.reduce((acc, e) => {
-          acc[e.category || "Other"] = (acc[e.category || "Other"] || 0) + Number(e.amount);
+          const cat = e.category || "Other";
+          acc[cat] = (acc[cat] || 0) + Number(e.amount);
           return acc;
         }, {}),
       },
@@ -116,7 +116,7 @@ export default function Dashboard() {
         image={heroImg}
       />
 
-      {/* Quick Action Buttons */}
+      {/* Quick Actions */}
       <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <QuickActions img={addExpenseImg} title="Add Expense" onClick={() => setShowAdd(true)} />
         <QuickActions img={insightsImg} title="Insights" />
@@ -124,13 +124,12 @@ export default function Dashboard() {
         <QuickActions img={splitBillImg} title="Split Bill" onClick={() => setShowSplit(true)} />
       </div>
 
-      {/* Main Insights and Summary */}
+      {/* Main Insights & Summary */}
       <div className="grid lg:grid-cols-3 gap-6">
-        {/* Left column: SmartInsights, Expense list, PieChartCard */}
+        {/* Left Column: Expenses, Insights, Pie Chart */}
         <div className="lg:col-span-2 space-y-6">
           <SmartInsights expenses={expenses} />
 
-          {/* Expenses List */}
           {loading && <div className="text-center py-6">Loading...</div>}
           {!loading && expenses.length === 0 && <div>No expenses yet</div>}
           {expenses.map((e) => (
@@ -142,14 +141,13 @@ export default function Dashboard() {
             />
           ))}
 
-          {/* Category Pie Chart */}
           <PieChartCard data={pieData} />
         </div>
 
-        {/* Right column: SafeAside (stocks + news) */}
+        {/* Right Column: SafeAside (Stocks + News) */}
         <div className="order-first lg:order-last">
           <SafeAside
-            wsUrl={`${import.meta.env.VITE_BACKEND_URL.replace(/^http/, "ws")}/ws/dashboard/`}
+            wsUrl={WS_DASHBOARD}
             stockSymbols={["GOOGL","AMZN","AAPL","TSLA","MSFT","RELIANCE","TCS","HDFC"]}
           />
         </div>

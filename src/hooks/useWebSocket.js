@@ -1,56 +1,64 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 
-/**
- * Custom hook for WebSocket with auto-reconnect and message history.
- * @param {string} url - WebSocket URL
- * @param {number} maxMessages - Max number of messages to keep in state
- */
 export function useWebSocket(url, maxMessages = 500) {
   const socketRef = useRef(null);
-  const reconnectTimer = useRef(null);
+  const reconnectTimeout = useRef(null);
   const isMounted = useRef(false);
+  const manuallyClosed = useRef(false);
 
   const [connected, setConnected] = useState(false);
   const [messages, setMessages] = useState([]);
 
   const connect = useCallback(() => {
-    if (!url) return;
+    if (!url) return console.warn("WebSocket URL missing");
 
-    // Prevent duplicate connections
+    // Prevent double connect
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) return;
 
-    const ws = new WebSocket(url);
+    manuallyClosed.current = false;
+
+    // ------------------------
+    // CLEAN URL
+    // ------------------------
+    let cleanUrl = url.trim();
+    cleanUrl = cleanUrl.replace(/([^:]\/)\/+/g, "$1");
+    if (cleanUrl.endsWith("/")) cleanUrl = cleanUrl.slice(0, -1);
+    console.log("Final WebSocket URL:", cleanUrl);
+
+    // ------------------------
+    // CREATE WS
+    // ------------------------
+    const ws = new WebSocket(cleanUrl);
     socketRef.current = ws;
 
     ws.onopen = () => {
       if (!isMounted.current) return;
-      console.log("WebSocket connected");
       setConnected(true);
-    };
-
-    ws.onclose = () => {
-      if (!isMounted.current) return;
-
-      console.log("WebSocket closed, reconnecting in 2s...");
-      setConnected(false);
-
-      reconnectTimer.current = setTimeout(() => {
-        if (isMounted.current) connect();
-      }, 2000);
-    };
-
-    ws.onerror = (err) => {
-      console.error("WebSocket error:", err);
-      ws.close(); // triggers onclose → reconnect
+      console.log("WebSocket connected ✔");
     };
 
     ws.onmessage = (event) => {
       try {
         const json = JSON.parse(event.data);
         setMessages((prev) => [...prev.slice(-maxMessages + 1), json]);
-      } catch (err) {
-        console.error("Invalid WebSocket message:", event.data);
+      } catch (e) {
+        console.error("Invalid WS message:", event.data);
       }
+    };
+
+    ws.onerror = (err) => {
+      console.error("WebSocket error:", err);
+      ws.close(); // triggers reconnect
+    };
+
+    ws.onclose = () => {
+      if (!isMounted.current || manuallyClosed.current) return;
+      setConnected(false);
+      console.warn("WebSocket closed. Reconnecting in 2s...");
+
+      reconnectTimeout.current = setTimeout(() => {
+        if (isMounted.current && !manuallyClosed.current) connect();
+      }, 2000);
     };
   }, [url, maxMessages]);
 
@@ -60,11 +68,10 @@ export function useWebSocket(url, maxMessages = 500) {
 
     return () => {
       isMounted.current = false;
-
-      if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
-
+      manuallyClosed.current = true;
+      if (reconnectTimeout.current) clearTimeout(reconnectTimeout.current);
       if (socketRef.current) {
-        socketRef.current.onclose = null; // prevent reconnect on cleanup
+        socketRef.current.onclose = null;
         socketRef.current.close();
       }
     };
@@ -75,7 +82,7 @@ export function useWebSocket(url, maxMessages = 500) {
     if (ws && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify(data));
     } else {
-      console.warn("WebSocket not connected. Cannot send message:", data);
+      console.warn("WebSocket not connected → message dropped:", data);
     }
   }, []);
 

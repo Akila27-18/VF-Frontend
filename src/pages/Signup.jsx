@@ -31,7 +31,10 @@ export default function Signup() {
         body: JSON.stringify({ email, password }),
       });
 
-      // backend returns { access, refresh, email }
+      if (!data?.access || !data?.refresh) {
+        throw new Error("Signup failed: Missing tokens");
+      }
+
       login(data.access, data.refresh, { email: data.email || email });
       navigate("/dashboard");
     } catch (err) {
@@ -44,6 +47,7 @@ export default function Signup() {
   return (
     <div className="max-w-md mx-auto mt-20 p-6 bg-white rounded-xl shadow">
       <h1 className="text-2xl font-bold mb-4">Create Account</h1>
+
       {error && <div className="text-red-500 mb-3">{error}</div>}
 
       <form className="space-y-3" onSubmit={handleSubmit}>

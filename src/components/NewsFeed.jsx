@@ -1,9 +1,12 @@
 // src/components/NewsFeed.jsx
 import React, { useEffect, useRef, useState } from "react";
 import { useWebSocket } from "../hooks/useWebSocket";
+import { WS_NEWS } from "../lib/ws"; // use normalized URL
+import { apiFetch } from "../lib/api";
 
-export default function NewsFeed({ wsUrl }) {
-  const { connected, messages } = useWebSocket(wsUrl);
+
+export default function NewsFeed() {
+  const { connected, messages } = useWebSocket(WS_NEWS);
   const [news, setNews] = useState([]);
   const [visibleCount, setVisibleCount] = useState(2);
   const loaderRef = useRef(null);
@@ -13,19 +16,34 @@ export default function NewsFeed({ wsUrl }) {
     if (!messages || messages.length === 0) return;
 
     const latest = messages[messages.length - 1];
+
     if (latest.type === "news_update" && Array.isArray(latest.data)) {
-      setNews(latest.data.slice(0, 20));
+      setNews((prev) => {
+        // Prevent unnecessary state updates
+        const newData = latest.data.slice(0, 20);
+        if (JSON.stringify(prev) !== JSON.stringify(newData)) return newData;
+        return prev;
+      });
     }
   }, [messages]);
 
   // ----------------- Infinite scroll -----------------
   useEffect(() => {
+    let lastScrollTime = 0;
+
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting) setVisibleCount((prev) => prev + 2);
+        if (entries[0].isIntersecting) {
+          const now = Date.now();
+          if (now - lastScrollTime > 300) {
+            setVisibleCount((prev) => prev + 2);
+            lastScrollTime = now;
+          }
+        }
       },
       { threshold: 1 }
     );
+
     if (loaderRef.current) observer.observe(loaderRef.current);
     return () => observer.disconnect();
   }, []);

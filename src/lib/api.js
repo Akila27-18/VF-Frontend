@@ -1,10 +1,12 @@
 // src/lib/api.js
+
 const raw = import.meta.env.VITE_BACKEND_URL || "https://vf-backend-1.onrender.com";
 export const API_URL = raw.replace(/\/$/, ""); // remove trailing slash
 
 export async function apiFetch(endpoint, options = {}) {
   const accessToken = localStorage.getItem("accessToken");
 
+  // Endpoints that don’t require authentication
   const noAuthEndpoints = [
     "/auth/login/",
     "/auth/signup/",
@@ -12,21 +14,24 @@ export async function apiFetch(endpoint, options = {}) {
     "/auth/password-reset/"
   ];
 
-  const isNoAuth = noAuthEndpoints.some(p => endpoint.startsWith(p));
+  const isNoAuth = noAuthEndpoints.some((p) => endpoint.startsWith(p));
 
+  // Combine headers
   const headers = {
     "Content-Type": "application/json",
     ...(accessToken && !isNoAuth ? { Authorization: `Bearer ${accessToken}` } : {}),
-    ...(options.headers || {})
+    ...(options.headers || {}),
   };
 
-  const url = `${API_URL}${endpoint.endsWith("/") ? endpoint : endpoint + "/"}`;
+  // Normalize URL: ensure leading slash, remove trailing slash
+  const normalizedEndpoint = `${endpoint.startsWith("/") ? "" : "/"}${endpoint.replace(/\/$/, "")}`;
+  const url = `${API_URL}${normalizedEndpoint}/`;
 
   let res;
   try {
     res = await fetch(url, { ...options, headers });
-  } catch (networkErr) {
-    throw new Error("Network error: " + networkErr.message);
+  } catch (err) {
+    throw new Error("Network error: " + err.message);
   }
 
   const contentType = res.headers.get("content-type");
@@ -43,8 +48,13 @@ export async function apiFetch(endpoint, options = {}) {
   }
 
   if (!res.ok) {
-    const errMsg = data?.detail || data?.error || data?.message || res.statusText || "API request failed";
-    throw new Error(errMsg);
+    const msg =
+      data?.detail ||
+      data?.error ||
+      data?.message ||
+      res.statusText ||
+      "API request failed";
+    throw new Error(msg);
   }
 
   return data;

@@ -1,5 +1,8 @@
+// src/components/MultiStockWidget.jsx
 import { useEffect, useState } from "react";
 import { Sparklines, SparklinesLine } from "react-sparklines";
+import { useWebSocket } from "../hooks/useWebSocket";
+import { WS_DASHBOARD } from "../lib/ws"; // using normalized WS URL
 
 // Stock logos
 const LOGOS = {
@@ -23,56 +26,43 @@ const mapSymbol = (s) => {
   return s;
 };
 
-const API_URL = import.meta.env.VITE_BACKEND_URL || "https://vf-backend-1.onrender.com";
-
 export default function MultiStockWidget({ symbols }) {
   const [stocks, setStocks] = useState({});
   const [profitInput, setProfitInput] = useState({});
 
-  const fetchStock = async (symbol) => {
-    const backendSymbol = mapSymbol(symbol);
+  // ------------------- WebSocket -------------------
+  const { messages, connected } = useWebSocket(WS_DASHBOARD);
 
-    try {
-      const res = await fetch(`${API_URL}/api/stock/${backendSymbol}`);
-      const json = await res.json();
-
-      if (!json) return null;
-
-      return {
-        uiSymbol: symbol,           // frontend label
-        backendSymbol: backendSymbol,
-        price: Number(json.price ?? 0),
-        change: Number(json.change ?? 0),
-        percent: Number(json.percent ?? 0),
-        spark: Array.isArray(json.spark) ? json.spark : [],
-      };
-    } catch (err) {
-      console.error("Failed to fetch stock:", backendSymbol, err);
-      return null;
-    }
-  };
-
-  const loadAll = async () => {
-    const results = await Promise.all(symbols.map((s) => fetchStock(s)));
-    const mapped = {};
-
-    symbols.forEach((s, i) => {
-      mapped[s] = results[i];
-    });
-
-    setStocks(mapped);
-  };
-
+  // ------------------- Handle incoming WS messages -------------------
   useEffect(() => {
-    // Stable effect: JSON.stringify avoids unnecessary refetch
-    loadAll();
-    const interval = setInterval(loadAll, 10000);
-    return () => clearInterval(interval);
-  }, [JSON.stringify(symbols)]);
+    if (!messages) return;
+
+    messages.forEach((msg) => {
+      if (msg.type === "stock_update") {
+        const backendSymbol = mapSymbol(msg.symbol);
+        setStocks((prev) => ({
+          ...prev,
+          [msg.symbol]: {
+            uiSymbol: msg.symbol,
+            backendSymbol: backendSymbol,
+            price: Number(msg.price ?? 0),
+            change: Number(msg.change ?? 0),
+            percent: Number(msg.percent ?? 0),
+            spark: Array.isArray(msg.spark) ? msg.spark : [],
+          },
+        }));
+      }
+    });
+  }, [messages]);
 
   return (
     <div className="p-4 rounded-xl shadow bg-white text-orange-500">
-      <h2 className="font-bold text-lg mb-3">📈 Live Market Updates</h2>
+      <div className="flex justify-between mb-3">
+        <h2 className="font-bold text-lg">📈 Live Market Updates</h2>
+        <span className={`text-xs ${connected ? "text-green-600" : "text-red-500"}`}>
+          {connected ? "Live" : "Offline"}
+        </span>
+      </div>
 
       <div className="overflow-y-auto max-h-[250px]">
         {symbols.map((symbol) => {
@@ -88,28 +78,20 @@ export default function MultiStockWidget({ symbols }) {
 
           const up = stock.change > 0;
           const logo =
-            LOGOS[stock.backendSymbol] ||
-            LOGOS[stock.uiSymbol] ||
-            "/logos/default.jpg";
+            LOGOS[stock.backendSymbol] || LOGOS[stock.uiSymbol] || "/logos/default.jpg";
 
           return (
             <div
               key={symbol}
               className="p-2 flex justify-between items-center border-b last:border-none"
             >
-              <img
-                src={logo}
-                alt={symbol}
-                className="w-10 h-10 rounded-full mr-3"
-              />
+              <img src={logo} alt={symbol} className="w-10 h-10 rounded-full mr-3" loading="lazy" />
 
               <div className="flex-1">
                 <div className="font-semibold">{symbol}</div>
 
                 <div className="text-sm">
-                  <span className="font-bold">
-                    ${stock.price.toFixed(2)}
-                  </span>
+                  <span className="font-bold">${stock.price.toFixed(2)}</span>
                   <span className={`ml-2 ${up ? "text-green-500" : "text-red-500"}`}>
                     {up ? "▲" : "▼"} {stock.percent.toFixed(2)}%
                   </span>
@@ -133,7 +115,7 @@ export default function MultiStockWidget({ symbols }) {
                     <div className="text-xs">
                       💰 P/L:{" "}
                       <span className={up ? "text-green-400" : "text-red-400"}>
-                        {(profitInput[symbol] * stock.change).toFixed(2)}
+                        {(Number(profitInput[symbol]) * stock.change).toFixed(2)}
                       </span>
                     </div>
                   )}

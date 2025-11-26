@@ -20,9 +20,9 @@ export default function ForgotPassword() {
         body: JSON.stringify({ email }),
       });
 
-      setMessage(res.message || "Password reset link sent. Check your inbox.");
+      setMessage(res?.message || "Password reset link sent. Check your inbox.");
     } catch (err) {
-      setError(err.message || "Failed to send reset email.");
+      setError(err?.message || "Failed to send reset email.");
     } finally {
       setLoading(false);
     }
