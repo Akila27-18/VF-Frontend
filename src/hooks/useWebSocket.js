@@ -12,22 +12,15 @@ export function useWebSocket(url, maxMessages = 500) {
   const connect = useCallback(() => {
     if (!url) return console.warn("WebSocket URL missing");
 
-    // Prevent double connect
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) return;
 
     manuallyClosed.current = false;
 
-    // ------------------------
-    // CLEAN URL
-    // ------------------------
+    // CLEAN URL (do NOT remove trailing slash)
     let cleanUrl = url.trim();
     cleanUrl = cleanUrl.replace(/([^:]\/)\/+/g, "$1");
-    if (cleanUrl.endsWith("/")) cleanUrl = cleanUrl.slice(0, -1);
     console.log("Final WebSocket URL:", cleanUrl);
 
-    // ------------------------
-    // CREATE WS
-    // ------------------------
     const ws = new WebSocket(cleanUrl);
     socketRef.current = ws;
 
@@ -48,7 +41,7 @@ export function useWebSocket(url, maxMessages = 500) {
 
     ws.onerror = (err) => {
       console.error("WebSocket error:", err);
-      ws.close(); // triggers reconnect
+      ws.close();
     };
 
     ws.onclose = () => {
