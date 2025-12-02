@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useChatWebSocket } from "../hooks/useChatWebSocket";
+import { useWebSocket } from "./hooks/useWebSocket";
 
-const WS_URL = "ws://localhost:5000";
+const WS_URL = "wss://vf-backend-2.onrender.com/ws/chat/";
 
 export default function ChatPanel() {
   const [messages, setMessages] = useState([]);
@@ -9,7 +9,7 @@ export default function ChatPanel() {
   const [typingUsers, setTypingUsers] = useState([]);
   const scroller = useRef(null);
 
-  const { status, sendMessage: sendWSMessage } = useChatWebSocket(WS_URL, (msg) => {
+  const { status, sendMessage: sendWSMessage } = useWebSocket(WS_URL, (msg) => {
     if (msg.type === "chat") setMessages((prev) => [...prev, msg.payload]);
     if (msg.type === "typing") {
       const from = msg.payload?.from;

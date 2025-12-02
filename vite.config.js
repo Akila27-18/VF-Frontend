@@ -8,12 +8,13 @@ export default defineConfig({
     alias: {
       src: path.resolve(__dirname, "src"),
     },
+
   },
   server: {
-    port: 5173,        // optional: set dev server port
-    open: true,        // optional: open browser on dev start
+    port: 5173,  // Dev server port
+    open: true,  // Opens browser automatically on 'npm run dev'
   },
   build: {
-    outDir: "dist",    // folder for production build
+    outDir: "dist", // Production build output folder
   },
 });

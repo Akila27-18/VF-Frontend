@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 
-export function useChatWebSocket(url, onMessageReceived) {
+export function useWebSocket(url, onMessageReceived) {
   const wsRef = useRef(null);
   const reconnectRef = useRef(null);
   const [status, setStatus] = useState("connecting");
