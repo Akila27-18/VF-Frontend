@@ -6,15 +6,21 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      src: path.resolve(__dirname, "src"),
-    },
-
+      src: path.resolve(__dirname, "src")
+    }
   },
   server: {
-    port: 5173,  // Dev server port
-    open: true,  // Opens browser automatically on 'npm run dev'
+    port: 5173,
+    open: true
   },
   build: {
-    outDir: "dist", // Production build output folder
-  },
+    outDir: "dist",
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("node_modules")) return "vendor";
+        }
+      }
+    }
+  }
 });
