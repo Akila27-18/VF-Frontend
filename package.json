@@ -1,1 +1,43 @@
-{"name":"vetri-finance-frontend","version":"1.0.0","private":true,"scripts":{"dev":"vite","build":"vite build","preview":"vite preview"},"dependencies":{"axios":"^1.4.0","chart.js":"^4.5.1","cors":"^2.8.5","express":"^5.1.0","framer-motion":"^10.18.0","lucide-react":"^0.553.0","node-fetch":"^3.3.2","react":"^18.2.0","react-beautiful-dnd":"^13.1.1","react-chartjs-2":"^5.3.1","react-dom":"^18.2.0","react-router-dom":"^6.30.2","react-sparklines":"^1.7.0","recharts":"^2.15.4","swiper":"^12.0.3"},"devDependencies":{"@vitejs/plugin-react":"^4.0.0","autoprefixer":"^10.4.20","postcss":"^8.4.35","tailwindcss":"^3.4.14","vite":"^7.2.6"},"description":"Vetri Finance Frontend (stable)","main":"postcss.config.js","keywords":[],"author":"","license":"ISC"}
+{
+  "name": "vetri-finance-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "npx vite build",
+    "preview": "vite preview",
+    "postinstall": "chmod +x ./node_modules/.bin/vite || true"
+  },
+  "dependencies": {
+    "axios": "^1.4.0",
+    "chart.js": "^4.5.1",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "framer-motion": "^10.18.0",
+    "lucide-react": "^0.553.0",
+    "node-fetch": "^3.3.2",
+    "react": "^18.2.0",
+    "react-beautiful-dnd": "^13.1.1",
+    "react-chartjs-2": "^5.3.1",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.30.2",
+    "react-sparklines": "^1.7.0",
+    "recharts": "^2.15.4",
+    "swiper": "^12.0.3"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.0.0",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.35",
+    "tailwindcss": "^3.4.14",
+    "vite": "^7.2.6"
+  },
+  "engines": {
+    "node": ">=18.x"
+  },
+  "description": "Vetri Finance Frontend (stable)",
+  "main": "postcss.config.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
