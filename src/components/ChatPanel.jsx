@@ -3,6 +3,7 @@ import { useWebSocket } from "./hooks/useWebSocket";
 
 const WS_URL = "wss://vf-backend-2.onrender.com/ws/chat/";
 
+
 export default function ChatPanel() {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
