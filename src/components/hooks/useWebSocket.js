@@ -4,13 +4,18 @@ export function useWebSocket(url, onMessageReceived) {
   const wsRef = useRef(null);
   const reconnectRef = useRef(null);
   const [status, setStatus] = useState("connecting");
+  const messageQueue = useRef([]);
 
   const connect = useCallback(() => {
     setStatus("connecting");
     const ws = new WebSocket(url);
     wsRef.current = ws;
 
-    ws.onopen = () => setStatus("online");
+    ws.onopen = () => {
+      setStatus("online");
+      messageQueue.current.forEach((msg) => ws.send(JSON.stringify(msg)));
+      messageQueue.current = [];
+    };
 
     ws.onmessage = (ev) => {
       try {
@@ -44,7 +49,7 @@ export function useWebSocket(url, onMessageReceived) {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(msg));
     } else {
-      console.warn("WebSocket not connected");
+      messageQueue.current.push(msg);
     }
   }, []);
 
