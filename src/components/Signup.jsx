@@ -61,7 +61,7 @@ try {
 return ( <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4"> <h1 className="text-3xl font-bold mb-4">Sign Up</h1> <p className="text-gray-600 mb-6 text-center max-w-md">
 Create your Vetri Finance account to start managing money together. </p>
 
-```
+
   <form
     className="bg-white p-6 rounded-xl shadow-md w-full max-w-md flex flex-col gap-4"
     onSubmit={handleSubmit}
