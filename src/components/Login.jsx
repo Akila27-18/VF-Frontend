@@ -1,25 +1,23 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff } from 'lucide-react';
-import API from '../lib/api';
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import API from "../lib/api";
 
 export default function Login() {
 const navigate = useNavigate();
-const [formData, setFormData] = useState({ email: '', password: '' });
+const [formData, setFormData] = useState({ email: "", password: "" });
 const [errors, setErrors] = useState({});
 const [loading, setLoading] = useState(false);
-const [showPass, setShowPass] = useState(false);
 
 const handleChange = (e) => {
 setFormData({ ...formData, [e.target.name]: e.target.value });
-setErrors({ ...errors, [e.target.name]: '' });
+setErrors({ ...errors, [e.target.name]: "" });
 };
 
 const validate = () => {
 const newErrors = {};
-if (!formData.email.trim()) newErrors.email = 'Email is required';
-else if (!/\S+@\S+.\S+/.test(formData.email)) newErrors.email = 'Invalid email address';
-if (!formData.password.trim()) newErrors.password = 'Password is required';
+if (!formData.email.trim()) newErrors.email = "Email is required";
+else if (!/\S+@\S+.\S+/.test(formData.email)) newErrors.email = "Invalid email address";
+if (!formData.password.trim()) newErrors.password = "Password is required";
 return newErrors;
 };
 
@@ -34,22 +32,18 @@ return;
 
 try {
   setLoading(true);
-  const response = await API.post('/auth/login', formData);
+  const response = await API.post("/auth/login", formData);
 
-  // Save token in localStorage
   if (response.data?.token) {
-    localStorage.setItem('token', response.data.token);
-    navigate('/dashboard');
+    localStorage.setItem("token", response.data.token);
+    navigate("/dashboard");
   } else {
-    setErrors({ general: 'Login failed: token missing from response' });
+    setErrors({ general: "Login failed: token missing from response" });
   }
 } catch (err) {
   console.error(err);
   setErrors({
-    general:
-      err.response?.data?.message ||
-      err.response?.data?.detail ||
-      'Login failed. Please try again.',
+    general: err.response?.data?.message || err.response?.data?.detail || "Login failed",
   });
 } finally {
   setLoading(false);
@@ -72,43 +66,32 @@ Log in to access your Vetri Finance dashboard. </p>
       </div>
     )}
 
-    <div className="flex flex-col">
-      <input
-        type="email"
-        name="email"
-        placeholder="Email address"
-        value={formData.email}
-        onChange={handleChange}
-        className={`border rounded-lg px-3 py-2 ${errors.email ? 'border-red-500' : ''}`}
-      />
-      {errors.email && <span className="text-red-500 text-sm mt-1">{errors.email}</span>}
-    </div>
+    <input
+      type="email"
+      name="email"
+      placeholder="Email address"
+      value={formData.email}
+      onChange={handleChange}
+      className={`border rounded-lg px-3 py-2 ${errors.email ? "border-red-500" : ""}`}
+    />
+    {errors.email && <span className="text-red-500 text-sm">{errors.email}</span>}
 
-    <div className="flex flex-col relative">
-      <input
-        type={showPass ? 'text' : 'password'}
-        name="password"
-        placeholder="Password"
-        value={formData.password}
-        onChange={handleChange}
-        className={`border rounded-lg px-3 py-2 pr-10 ${errors.password ? 'border-red-500' : ''}`}
-      />
-      <button
-        type="button"
-        className="absolute right-3 top-2.5 text-gray-500 hover:text-gray-700"
-        onClick={() => setShowPass(!showPass)}
-      >
-        {showPass ? <EyeOff size={20} /> : <Eye size={20} />}
-      </button>
-      {errors.password && <span className="text-red-500 text-sm mt-1">{errors.password}</span>}
-    </div>
+    <input
+      type="password"
+      name="password"
+      placeholder="Password"
+      value={formData.password}
+      onChange={handleChange}
+      className={`border rounded-lg px-3 py-2 ${errors.password ? "border-red-500" : ""}`}
+    />
+    {errors.password && <span className="text-red-500 text-sm">{errors.password}</span>}
 
     <button
       type="submit"
-      className="px-4 py-2 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition"
       disabled={loading}
+      className="px-4 py-2 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition"
     >
-      {loading ? 'Logging in...' : 'Login'}
+      {loading ? "Logging in..." : "Login"}
     </button>
 
     <div className="flex justify-between text-sm mt-1">
